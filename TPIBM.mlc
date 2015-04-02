@@ -1,0 +1,9 @@
+TPIBM    SUBENTRY BASES=(3)         
+         WTO   '=========>    INICIO    <========='         
+        
+
+FIN    WTO   '=========>    FIN    <========='  
+		 
+		 SUBEXIT
+
+         END
