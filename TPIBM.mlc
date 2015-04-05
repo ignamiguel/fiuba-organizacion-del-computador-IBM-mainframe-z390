@@ -1,9 +1,32 @@
-TPIBM    SUBENTRY BASES=(3)         
+TPIBM    SUBENTRY BASES=(3,4)         
          WTO   '=========>    INICIO    <========='         
-        
-
-FIN    WTO   '=========>    FIN    <========='  
+         WTOR  'INGRESE EL 1ER NRO (2 DIGITOS)',NUM1,,WAITECB
+         WAIT  ECB=WAITECB
+		 WTOR  'INGRESE EL 2DO NRO (2 DIGITOS)',NUM2,,WAITECB
+		 WAIT  ECB=WAITECB
 		 
-		 SUBEXIT
+		 PACK  AUXNUM1,NUM1
+		 PACK  AUXNUM2,NUM2
+		 AP    AUXNUM1,AUXNUM2
+		 UNPK  SUMA,AUXNUM1
+		 MVZ   SUMA+7(1),=X'FF'
+		 
+		 WTO   'LA SUMA ES: '
+		 WTO   MF=(E,WTOBLOCK)
 
-         END
+FIN      WTO   '=========>    FIN    <========='  
+         SUBEXIT
+		 
+NUM1     DS    CL2
+NUM2     DS    CL2
+
+WAITECB  DC    F'0'
+
+WTOBLOCK DC    H'12'
+		 DC    H'0'
+SUMA     DS    CL8
+
+AUXNUM1  DS    PL4
+AUXNUM2  DS    PL4
+
+		 END
