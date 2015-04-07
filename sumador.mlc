@@ -2,8 +2,8 @@ TPIBM    SUBENTRY BASES=(3,4)
          WTO   '=========>    INICIO    <========='         
          
 		 BAL   5,INICIAR
-ACA		 BAL   5,MENU
-         WTOR  'INGRESE OPCION 0-9',OPCION,,WAITECB
+MENU	 BAL   5,IMPRME_M
+         WTOR  'SELECCIONAR OPCION [0-9]',OPCION,,WAITECB
 		 WAIT  ECB=WAITECB 
          CLC   OPCION,=C'1'
 		 BE    INGRESAR
@@ -24,14 +24,13 @@ INICIAR  LA    6,MAT
          LA    9,20
 INITMAT  MVC   0(3,6),=X'00000F'
          LA    6,3(6)
-         BCT   9,INITMAT
-		 LA    6,MAT
+         BCT   9,INITMAT		 
          BR    5
 
-*************************************
-*******           MENU        *******
-*************************************
-MENU     WTO   '---------------------------------'
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
          WTO   '---------      MENU     ---------'
          WTO   '---------------------------------'
          WTO   '1) INGRESAR FRACCION'
@@ -43,9 +42,9 @@ MENU     WTO   '---------------------------------'
 *************************************
 *******   INGRESAR FRACCION   *******
 *************************************
-INGRESAR WTOR  'NRO DE FRACCION A INGRESAR [0-9]',ORDEN,,WAITECB
-		 WAIT  ECB=WAITECB
-* VALIDO ORDEN *         
+INGRESAR LA    6,MAT
+         WTOR  'SELECCIONAR FRACCION A INGRESAR [0-9]',ORDEN,,WAITECB
+		 WAIT  ECB=WAITECB 
 		 CLC   ORDEN,=C'0'
 		 BL    INVORDEN
 		 CLC   ORDEN,=C'9'
@@ -67,10 +66,12 @@ SIGNO_F  WTOR  'INGRESE SIGNO DE FRACCION (+ O -)',SIGNO,,WAITECB
 		 BE    NEGATIVA
 		 WTO   'SIGNO INVALIDO'
 		 B     SIGNO_F
+
 NEGATIVA LA    7,1 
 		 
 NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
          WAIT  ECB=WAITECB
+		    
 		 WTOR  'INGRESE EL DENOMINADOR (4 DIGITOS)',DENMDOR,,WAITECB
 		 WAIT  ECB=WAITECB
 		 
@@ -85,7 +86,7 @@ NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
 		 
 POSITIVA MVC   0(3,6),AUXNUM1	 
          MVC   3(3,6),AUXNUM2
-         B     ACA
+         B     MENU
 		 
 * MENSAJE DE ERROR AUXILIAR *
 INVORDEN WTO   'ORDEN INVALIDO'
@@ -99,42 +100,35 @@ MOSTRAR  LA    6,MAT
 		 PACK  ORDENPCK,ORDEN
          
          LA    7,10
-NACHO	 LA    9,6
-*		 LA    8,0		 
-*		 M     8,=F'6'         
-*        AR    6,9
-		 
+IMPRME_F LA    9,6
+	 
          MVC   AUXNUM1,0(6)
 		 MVC   AUXNUM2,3(6)
 		 
 		 UNPK  NUMRDOR,AUXNUM1
 		 UNPK  DENMDOR,AUXNUM2
  
-         MVC   SIGNO,=C'+'
+         MVC   SIGNO,=C' '
 		 CP    AUXNUM1,=P'0'
-		 BH    SALE
-		 BE    SALE
+		 BH    SIN_SIGN
+		 BE    SIN_SIGN
          MVC   SIGNO,=C'-'
 	     MVZ   NUMRDOR+3(1),=X'FF'
 		 
-*		 MVC   NUMRDOR,=C'0001'
-*		 MVC   DENMDOR,=C'0002'
-		 
-SALE	 UNPK  ORDEN,ORDENPCK
+SIN_SIGN UNPK  ORDEN,ORDENPCK
          MVZ   ORDEN(1),=X'FF' 
          MVC   FRAC+9(1),ORDEN
-    	 WTO   MF=(E,FRAC-4)
 
          MVC   RESULT(1),SIGNO
          MVC   RESULT+1(4),NUMRDOR
          MVC   RESULT+5(1),=C'/'
          MVC   RESULT+6(4),DENMDOR
-		 WTO   MF=(E,RESULT-4)
-		 WTO   '-'
+		 MVC   FRAC+12(10),RESULT
+		 WTO   MF=(E,FRAC-4)
          AP    ORDENPCK,=P'1'
 		 AR    6,9
-		 BCT   7,NACHO
-		 B     ACA
+		 BCT   7,IMPRME_F
+		 B     MENU
 		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
@@ -148,9 +142,9 @@ SIGNO    DS    CL1
 NUMRDOR  DS    CL4
 DENMDOR  DS    CL4
 
-         DC    H'15'
+         DC    H'26'
 		 DC    H'0'
-FRAC     DC    C'FRACCION X:'
+FRAC     DC    C'FRACCION X:           '
 ITER     DS    CL1
 
          DC    H'14'
