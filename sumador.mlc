@@ -10,7 +10,7 @@ MENU	 BAL   5,IMPRME_M
 		 CLC   OPCION,=C'2'
 		 BE    MOSTRAR
 		 CLC   OPCION,=C'3'
-		 BE    MOSTRAR
+		 BE    SUMAR
 		 CLC   OPCION,=C'0'
 		 BE    FIN
 		 
@@ -24,7 +24,13 @@ INICIAR  LA    6,MAT
          LA    9,20
 INITMAT  MVC   0(3,6),=X'00000F'
          LA    6,3(6)
-         BCT   9,INITMAT		 
+         BCT   9,INITMAT
+* INICIALIZO PARA SUMAR *
+         LA    6,MAT
+         MVC   0(3,6),=X'00001F'
+         MVC   3(3,6),=X'00002F'
+         MVC   6(3,6),=X'00001F'
+         MVC   9(3,6),=X'00003F'
          BR    5
 
 ************************************
@@ -96,14 +102,15 @@ INVORDEN WTO   'ORDEN INVALIDO'
 *******   MOSTRAR   ******* 
 ***************************
 MOSTRAR  LA    6,MAT
-		 MVC   ORDEN,=C'0'
-		 PACK  ORDENPCK,ORDEN
+         ZAP   ORDENPCK,=P'0'
          
          LA    7,10
-IMPRME_F LA    9,6
-	 
-         MVC   AUXNUM1,0(6)
+         LA    9,6
+IMPRME_F MVC   AUXNUM1,0(6)
 		 MVC   AUXNUM2,3(6)
+		 
+		 CP    AUXNUM1,=P'0'
+		 BE    NO_MOST
 		 
 		 UNPK  NUMRDOR,AUXNUM1
 		 UNPK  DENMDOR,AUXNUM2
@@ -118,18 +125,75 @@ IMPRME_F LA    9,6
 SIN_SIGN UNPK  ORDEN,ORDENPCK
          MVZ   ORDEN(1),=X'FF' 
          MVC   FRAC+9(1),ORDEN
-
-         MVC   RESULT(1),SIGNO
-         MVC   RESULT+1(4),NUMRDOR
-         MVC   RESULT+5(1),=C'/'
-         MVC   RESULT+6(4),DENMDOR
-		 MVC   FRAC+12(10),RESULT
+         MVC   FRAC+12(1),SIGNO
+         MVC   FRAC+13(4),NUMRDOR
+         MVC   FRAC+17(1),=C'/'
+         MVC   FRAC+18(4),DENMDOR
 		 WTO   MF=(E,FRAC-4)
-         AP    ORDENPCK,=P'1'
+
+NO_MOST  AP    ORDENPCK,=P'1'
 		 AR    6,9
 		 BCT   7,IMPRME_F
-		 B     MENU
 		 
+		 B     MENU
+*************************************
+*******    SUMAR FRACCIONES   ******* 
+*************************************
+SUMAR    LA    6,MAT
+
+* INICIALIZO EN NUM EN 0 Y DEN EN 1
+         ZAP   RES_NUM,=P'0'
+         ZAP   RES_DEN,=P'1'
+
+* MULTIPLICO POR EL DEN DE LA 1RA FRACCION		 
+		 MP    RES_DEN,3(3,6)
+		 UNPK  RESULT,RES_DEN
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+
+* MULTIPLICO POR EL DEN DE LA 2DA FRACCION
+		 MP    RES_DEN,9(3,6)
+		 UNPK  RESULT,RES_DEN
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+
+* DIVIDO POR EL DEN DE LA 1RA FRACCION  
+         ZAP   DIVIDEND,RES_DEN
+		 ZAP   DIVISOR,3(3,6)
+		 
+		 DP    DIVIDEND,DIVISOR
+		 LA    7,DIVIDEND   
+		 UNPK  RESULT,0(3,7)
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+		 
+		 ZAP   DIVIDEND,=P'3'
+		 MP    DIVIDEND,0(3,6)
+		 LA    7,DIVIDEND
+		 ZAP   RES_NUM,2(4,7)
+		 UNPK  RESULT,RES_NUM
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+		 
+* DIVIDO POR EL DEN DE LA 2RA FRACCION  
+         ZAP   DIVIDEND,RES_DEN
+		 ZAP   DIVISOR,9(3,6)
+		 
+		 DP    DIVIDEND,DIVISOR
+		 LA    7,DIVIDEND   
+		 UNPK  RESULT,0(3,7)
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+		 
+		 ZAP   DIVIDEND,=P'3'
+		 MP    DIVIDEND,6(3,6)
+		 LA    7,DIVIDEND
+		 ZAP   RES_NUM,2(4,7)
+		 UNPK  RESULT,RES_NUM
+		 MVZ   RESULT+11(1),=X'FF'
+		 WTO   MF=(E,RESULT-4)
+		 
+		 B     MENU
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
@@ -145,19 +209,20 @@ DENMDOR  DS    CL4
          DC    H'26'
 		 DC    H'0'
 FRAC     DC    C'FRACCION X:           '
-ITER     DS    CL1
-
-         DC    H'14'
-		 DC    H'0'
-RESULT   DS    CL10
 
 MAT      DS    20PL3
 
-WAITECB  DC    F'0'
+RES_NUM  DS    PL4
+RES_DEN  DS    PL4
 
-WTOBLOCK DC    H'12'
+DIVIDEND DS    PL6
+DIVISOR  DS    PL3
+
+         DC    H'16'
 		 DC    H'0'
-SUMA     DS    CL8
+RESULT   DS    CL12
+
+WAITECB  DC    F'0'
 
 AUXNUM1  DS    PL3
 AUXNUM2  DS    PL3
