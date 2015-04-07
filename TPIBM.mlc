@@ -1,24 +1,157 @@
 TPIBM    SUBENTRY BASES=(3,4)         
          WTO   '=========>    INICIO    <========='         
-         WTOR  'INGRESE EL 1ER NRO (2 DIGITOS)',NUM1,,WAITECB
-         WAIT  ECB=WAITECB
-		 WTOR  'INGRESE EL 2DO NRO (2 DIGITOS)',NUM2,,WAITECB
-		 WAIT  ECB=WAITECB
+         
+		 BAL   5,INICIAR
+MENU	 BAL   5,IMPRME_M
+         WTOR  'SELECCIONAR OPCION [0-9]',OPCION,,WAITECB
+		 WAIT  ECB=WAITECB 
+         CLC   OPCION,=C'1'
+		 BE    INGRESAR
+		 CLC   OPCION,=C'2'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'3'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'0'
+		 BE    FIN
 		 
-		 PACK  AUXNUM1,NUM1
-		 PACK  AUXNUM2,NUM2
-		 AP    AUXNUM1,AUXNUM2
-		 UNPK  SUMA,AUXNUM1
-		 MVZ   SUMA+7(1),=X'FF'
-		 
-		 WTO   'LA SUMA ES: '
-		 WTO   MF=(E,WTOBLOCK)
-
 FIN      WTO   '=========>    FIN    <========='  
          SUBEXIT
+
+*************************************
+*******   INICIAR VARIABLES   *******
+*************************************
+INICIAR  LA    6,MAT
+         LA    9,20
+INITMAT  MVC   0(3,6),=X'00000F'
+         LA    6,3(6)
+         BCT   9,INITMAT		 
+         BR    5
+
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
+         WTO   '---------      MENU     ---------'
+         WTO   '---------------------------------'
+         WTO   '1) INGRESAR FRACCION'
+         WTO   '2) VER FRACCION'
+         WTO   '3) SUMAR FRACCIONES'		 
+         WTO   '0) SALIR'		 
+		 BR    5
 		 
-NUM1     DS    CL2
-NUM2     DS    CL2
+*************************************
+*******   INGRESAR FRACCION   *******
+*************************************
+INGRESAR LA    6,MAT
+         WTOR  'SELECCIONAR FRACCION A INGRESAR [0-9]',ORDEN,,WAITECB
+		 WAIT  ECB=WAITECB 
+		 CLC   ORDEN,=C'0'
+		 BL    INVORDEN
+		 CLC   ORDEN,=C'9'
+		 BH    INVORDEN
+
+		 PACK  ORDENPCK,ORDEN
+		 CVB   9,ORDENPCK
+		 LA    8,0
+		 
+		 M     8,=F'6'
+		 AR    6,9
+		 
+		 LA    7,0
+SIGNO_F  WTOR  'INGRESE SIGNO DE FRACCION (+ O -)',SIGNO,,WAITECB
+		 WAIT  ECB=WAITECB
+		 CLC   SIGNO,=C'+'
+		 BE    NUM_F
+		 CLC   SIGNO,=C'-'
+		 BE    NEGATIVA
+		 WTO   'SIGNO INVALIDO'
+		 B     SIGNO_F
+
+NEGATIVA LA    7,1 
+		 
+NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
+         WAIT  ECB=WAITECB
+		    
+		 WTOR  'INGRESE EL DENOMINADOR (4 DIGITOS)',DENMDOR,,WAITECB
+		 WAIT  ECB=WAITECB
+		 
+*--- EMPAQUETO ---*
+		 PACK  AUXNUM1,NUMRDOR
+		 PACK  AUXNUM2,DENMDOR		 
+		 
+		 LA    8,0
+		 CR    7,8
+		 BE    POSITIVA		 
+         MVN   AUXNUM1+2(1),=X'DD'
+		 
+POSITIVA MVC   0(3,6),AUXNUM1	 
+         MVC   3(3,6),AUXNUM2
+         B     MENU
+		 
+* MENSAJE DE ERROR AUXILIAR *
+INVORDEN WTO   'ORDEN INVALIDO'
+         B     INGRESAR
+		 
+***************************
+*******   MOSTRAR   ******* 
+***************************
+MOSTRAR  LA    6,MAT
+		 MVC   ORDEN,=C'0'
+		 PACK  ORDENPCK,ORDEN
+         
+         LA    7,10
+IMPRME_F LA    9,6
+	 
+         MVC   AUXNUM1,0(6)
+		 MVC   AUXNUM2,3(6)
+		 
+		 UNPK  NUMRDOR,AUXNUM1
+		 UNPK  DENMDOR,AUXNUM2
+ 
+         MVC   SIGNO,=C' '
+		 CP    AUXNUM1,=P'0'
+		 BH    SIN_SIGN
+		 BE    SIN_SIGN
+         MVC   SIGNO,=C'-'
+	     MVZ   NUMRDOR+3(1),=X'FF'
+		 
+SIN_SIGN UNPK  ORDEN,ORDENPCK
+         MVZ   ORDEN(1),=X'FF' 
+         MVC   FRAC+9(1),ORDEN
+
+         MVC   RESULT(1),SIGNO
+         MVC   RESULT+1(4),NUMRDOR
+         MVC   RESULT+5(1),=C'/'
+         MVC   RESULT+6(4),DENMDOR
+		 MVC   FRAC+12(10),RESULT
+		 WTO   MF=(E,FRAC-4)
+         AP    ORDENPCK,=P'1'
+		 AR    6,9
+		 BCT   7,IMPRME_F
+		 B     MENU
+		 
+********************************************
+*******   DECLARACION DE VARIABLES   *******
+********************************************
+OPCION   DS    CL1
+ORDEN    DS    CL1
+ORDENPCK DS    PL8
+UNO      DC    P'1'
+
+SIGNO    DS    CL1  
+NUMRDOR  DS    CL4
+DENMDOR  DS    CL4
+
+         DC    H'26'
+		 DC    H'0'
+FRAC     DC    C'FRACCION X:           '
+ITER     DS    CL1
+
+         DC    H'14'
+		 DC    H'0'
+RESULT   DS    CL10
+
+MAT      DS    20PL3
 
 WAITECB  DC    F'0'
 
@@ -26,7 +159,7 @@ WTOBLOCK DC    H'12'
 		 DC    H'0'
 SUMA     DS    CL8
 
-AUXNUM1  DS    PL4
-AUXNUM2  DS    PL4
+AUXNUM1  DS    PL3
+AUXNUM2  DS    PL3
 
 		 END
