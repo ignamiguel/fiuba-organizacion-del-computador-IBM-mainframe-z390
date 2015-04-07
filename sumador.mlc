@@ -39,9 +39,10 @@ INITMAT  MVC   0(3,6),=X'00000F'
 IMPRME_M WTO   '---------------------------------'
          WTO   '---------      MENU     ---------'
          WTO   '---------------------------------'
-         WTO   '1) INGRESAR FRACCION'
-         WTO   '2) VER FRACCION'
-         WTO   '3) SUMAR FRACCIONES'		 
+         WTO   '1) INGRESAR UNA FRACCION'
+         WTO   '2) VER FRACCIONES INGRESADAS'
+         WTO   '3) SUMAR TODAS LAS FRACCIONES'		 
+         WTO   '4) ORDENAR'		 
          WTO   '0) SALIR'		 
 		 BR    5
 		 
@@ -141,21 +142,21 @@ NO_MOST  AP    ORDENPCK,=P'1'
 *************************************
 SUMAR    LA    6,MAT
 
-* INICIALIZO EN NUM EN 0 Y DEN EN 1
+* INICIALIZO El NUM EN 0 Y DEN EN 1
          ZAP   RES_NUM,=P'0'
          ZAP   RES_DEN,=P'1'
 
 * MULTIPLICO POR EL DEN DE LA 1RA FRACCION		 
 		 MP    RES_DEN,3(3,6)
-		 UNPK  RESULT,RES_DEN
-		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
 
 * MULTIPLICO POR EL DEN DE LA 2DA FRACCION
 		 MP    RES_DEN,9(3,6)
-		 UNPK  RESULT,RES_DEN
-		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
 
 * DIVIDO POR EL DEN DE LA 1RA FRACCION  
          ZAP   DIVIDEND,RES_DEN
@@ -163,17 +164,17 @@ SUMAR    LA    6,MAT
 		 
 		 DP    DIVIDEND,DIVISOR
 		 LA    7,DIVIDEND   
-		 UNPK  RESULT,0(3,7)
-		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+*		 UNPK  RESULT,0(3,7)
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
 		 
-		 ZAP   DIVIDEND,=P'3'
-		 MP    DIVIDEND,0(3,6)
-		 LA    7,DIVIDEND
-		 ZAP   RES_NUM,2(4,7)
-		 UNPK  RESULT,RES_NUM
-		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+		 ZAP   RES_AUX,0(3,7)
+		 MP    RES_AUX,0(3,6)
+		 ZAP   RES_NUM,RES_AUX
+		 
+*		 UNPK  RESULT,RES_NUM
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
 		 
 * DIVIDO POR EL DEN DE LA 2RA FRACCION  
          ZAP   DIVIDEND,RES_DEN
@@ -181,17 +182,30 @@ SUMAR    LA    6,MAT
 		 
 		 DP    DIVIDEND,DIVISOR
 		 LA    7,DIVIDEND   
-		 UNPK  RESULT,0(3,7)
-		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+*		 UNPK  RESULT,0(3,7)
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
 		 
-		 ZAP   DIVIDEND,=P'3'
-		 MP    DIVIDEND,6(3,6)
-		 LA    7,DIVIDEND
-		 ZAP   RES_NUM,2(4,7)
+		 ZAP   RES_AUX,0(3,7)
+		 MP    RES_AUX,6(3,6)
+		 AP    RES_NUM,RES_AUX
+		 
+*		 UNPK  RESULT,RES_NUM
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+		 
 		 UNPK  RESULT,RES_NUM
 		 MVZ   RESULT+11(1),=X'FF'
-		 WTO   MF=(E,RESULT-4)
+		 
+		 MVC   RE_SUMA+3(5),RESULT+7
+		 
+		 MVC   RE_SUMA+8(1),=C'/'
+		 
+		 UNPK  RESULT,RES_DEN
+		 MVZ   RESULT+11(1),=X'FF'
+		 MVC   RE_SUMA+9(5),RESULT+7
+		 
+		 WTO   MF=(E,RE_SUMA-4)
 		 
 		 B     MENU
 ********************************************
@@ -214,6 +228,7 @@ MAT      DS    20PL3
 
 RES_NUM  DS    PL4
 RES_DEN  DS    PL4
+RES_AUX  DS    PL4
 
 DIVIDEND DS    PL6
 DIVISOR  DS    PL3
@@ -221,6 +236,10 @@ DIVISOR  DS    PL3
          DC    H'16'
 		 DC    H'0'
 RESULT   DS    CL12
+
+         DC    H'34'
+		 DC    H'0'
+RE_SUMA  DC    C'=:                              '
 
 WAITECB  DC    F'0'
 
