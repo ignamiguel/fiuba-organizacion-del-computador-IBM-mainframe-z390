@@ -11,6 +11,8 @@ MENU	 BAL   5,IMPRME_M
 		 BE    MOSTRAR
 		 CLC   OPCION,=C'3'
 		 BE    SUMAR
+		 CLC   OPCION,=C'4'
+		 BE    ORDENAR
 		 CLC   OPCION,=C'0'
 		 BE    FIN
 		 
@@ -78,9 +80,10 @@ NEGATIVA LA    7,1
 		 
 NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
          WAIT  ECB=WAITECB
-		    
+* TODO VALIDAR QUE NO SEA 0000 *		   
 		 WTOR  'INGRESE EL DENOMINADOR (4 DIGITOS)',DENMDOR,,WAITECB
 		 WAIT  ECB=WAITECB
+* TODO VALIDAR QUE NO SEA 0000 *
 		 
 *--- EMPAQUETO ---*
 		 PACK  AUXNUM1,NUMRDOR
@@ -208,13 +211,67 @@ SUMAR    LA    6,MAT
 		 WTO   MF=(E,RE_SUMA-4)
 		 
 		 B     MENU
+		 
+**************************************
+*******   ORDENAR FRACCIONES   ******* 
+**************************************
+ORDENAR  LA    6,MAT
+         MVC   A_INDICE(10),A_AUX
+
+* LA MAYOR FRACCION AL FINAL *
+         ZAP   A_INDICE,=P'1'
+		 ZAP   A_INDICE+1,=P'0'
+		 
+         LA    7,10
+         LA    9,6
+		 LA    8,A_INDICE
+IMPRME_2 LA    6,MAT		 
+* RESUELVO EL OFFSET *
+         
+		 ZAP   EMP_INDI,=P'6'
+		 MP    EMP_INDI,0(1,8)
+         CVB   9,EMP_INDI         
+         AR    6,9
+		 
+         MVC   AUXNUM1,0(6)
+		 MVC   AUXNUM2,3(6)
+		 
+		 CP    AUXNUM1,=P'0'
+		 BE    N_MOST2
+		 
+		 UNPK  NUMRDOR,AUXNUM1
+		 UNPK  DENMDOR,AUXNUM2
+ 
+         MVC   SIGNO,=C' '
+		 CP    AUXNUM1,=P'0'
+		 BH    S_SIGN2
+		 BE    S_SIGN2
+         MVC   SIGNO,=C'-'
+	     MVZ   NUMRDOR+3(1),=X'FF'
+		 
+		 ZAP   ORDENPCK,0(1,8)
+		 
+S_SIGN2  ZAP   ORDENPCK,0(1,8)
+         UNPK  ORDEN,ORDENPCK
+         MVZ   ORDEN(1),=X'FF' 
+         MVC   FRAC+9(1),ORDEN
+         MVC   FRAC+12(1),SIGNO
+         MVC   FRAC+13(4),NUMRDOR
+         MVC   FRAC+17(1),=C'/'
+         MVC   FRAC+18(4),DENMDOR
+		 WTO   MF=(E,FRAC-4)
+
+N_MOST2  A     8,=F'1'
+         BCT   7,IMPRME_2
+		 
+		 B     MENU
+		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
 OPCION   DS    CL1
 ORDEN    DS    CL1
 ORDENPCK DS    PL8
-UNO      DC    P'1'
 
 SIGNO    DS    CL1  
 NUMRDOR  DS    CL4
@@ -245,5 +302,10 @@ WAITECB  DC    F'0'
 
 AUXNUM1  DS    PL3
 AUXNUM2  DS    PL3
+
+A_INDICE DS    10P'0'
+A_AUX    DC    X'0C1C2C3C4C5C6C7C8C9C'
+EMP_L2   DC    P'00'
+EMP_INDI DC    P'000000000000000'
 
 		 END
