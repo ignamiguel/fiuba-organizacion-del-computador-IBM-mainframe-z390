@@ -12,9 +12,9 @@ MENU	 BAL   5,IMPRME_M
 		 CLC   OPCION,=C'3'
 		 BE    SUMAR
 		 CLC   OPCION,=C'4'
-		 BE    ORDENAR
+		 BE    ORDENASC
 		 CLC   OPCION,=C'5'
-		 BE    ORDENAR2
+		 BE    ORDENDES
 		 CLC   OPCION,=C'0'
 		 BE    FIN
 		 
@@ -37,6 +37,12 @@ INITMAT  MVC   0(3,6),=X'00000F'
          MVC   3(3,6),=X'00002F'
          MVC   6(3,6),=X'00001F'
          MVC   9(3,6),=X'00003F'
+		 MVC   12(3,6),=X'00001D'
+         MVC   15(3,6),=X'00002F'
+         MVC   18(3,6),=X'00001F'
+         MVC   21(3,6),=X'00001F'
+		 MVC   24(3,6),=X'00005F'
+         MVC   27(3,6),=X'00003F'
          BR    5
 
 ************************************
@@ -221,10 +227,10 @@ SUMAR    LA    6,MAT
 **************************************
 *******   ORDENAR FRACCIONES   ******* 
 **************************************
-ORDENAR  ZAP   ORDN_ASC,=P'1'
-         B     NACHO
-ORDENAR2 ZAP   ORDN_ASC,=P'0'         
-NACHO    MVC   A_INDICE(10),A_AUX
+ORDENASC ZAP   ORDN_ASC,=P'1'
+         B     ORDENAR
+ORDENDES ZAP   ORDN_ASC,=P'0'         
+ORDENAR  MVC   A_INDICE(10),A_AUX
          LA 10,9
 *; ITERAR TODAS LAS POSICIONES *
 VUELTA_B LA    8,A_INDICE
@@ -260,8 +266,9 @@ BURBUJA  LA    6,MAT
 		 
 		 ZAP  OPERAN2,AUXNUM3
 		 MP   OPERAN2,AUXNUM2	 
-		 
-*; ORDEN ASC O DESC 
+*;***********************
+*;   ORDEN ASC O DESC  **
+*;***********************
          CP   ORDN_ASC,=P'1'
 		 BE   ES_ASC
 		 
