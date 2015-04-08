@@ -29,9 +29,9 @@ INICIAR  LA    6,MAT
 INITMAT  MVC   0(3,6),=X'00000F'
          LA    6,3(6)
          BCT   9,INITMAT
-*;******************************
-*; TEST INICIALIZO PARA SUMAR  *
-*;******************************
+*;****************************
+*; CARGO VALORES DE PREUBA  **
+*;****************************
          LA    6,MAT
          MVC   0(3,6),=X'00001F'
          MVC   3(3,6),=X'00002F'
@@ -91,10 +91,10 @@ NEGATIVA LA    7,1
 		 
 NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
          WAIT  ECB=WAITECB
-*; TODO VALIDAR QUE NO SEA 0000 *		   
+*; TODO: VALIDAR QUE NO SEA 0000 *		   
 		 WTOR  'INGRESE EL DENOMINADOR (4 DIGITOS)',DENMDOR,,WAITECB
 		 WAIT  ECB=WAITECB
-*; TODO VALIDAR QUE NO SEA 0000 *
+*; TODO: VALIDAR QUE NO SEA 0000 *
 		 
 *;--- EMPAQUETO ---*
 		 PACK  AUXNUM1,NUMRDOR
@@ -156,69 +156,105 @@ NO_MOST  AP    ORDENPCK,=P'1'
 *******    SUMAR FRACCIONES   ******* 
 *************************************
 SUMAR    LA    6,MAT
+         LA    7,10
 
-* INICIALIZO El NUM EN 0 Y DEN EN 1
+*; INICIALIZO El RES_NUM EN 0 Y RES_DEN EN 1
+*; ELEMENTO NEUTRO PARA LA SUMA
          ZAP   RES_NUM,=P'0'
          ZAP   RES_DEN,=P'1'
-
-* MULTIPLICO POR EL DEN DE LA 1RA FRACCION		 
+    
+*; ME GUARDO EL RES_DEN ANTERIOR
+ITER_SUM	 ZAP   RES_AUX,RES_DEN
+		 
+*; SI EL DEN = 0, NO LO SUMO 
+         CP    3(3,6),=P'0'
+		 BE    INCR_MAT
+		 
+*; MULTIPLICO RES_DEN X EL DEN DE LA FRACCION		 
 		 MP    RES_DEN,3(3,6)
 *		 UNPK  RESULT,RES_DEN
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 
-* MULTIPLICO POR EL DEN DE LA 2DA FRACCION
-		 MP    RES_DEN,9(3,6)
+*; MULTIPLICO RES_AUX X EL NUM DE LA FRACCION		 
+		 MP    RES_AUX,0(3,6)
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+
+*; MULTIPLICO RES_NUM X EL DEN DE LA FRACCION		 
+		 MP    RES_NUM,3(3,6)
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+
+*; SUMO RES_NUM + RES_AUX		 
+		 AP    RES_NUM,RES_AUX
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+         
+INCR_MAT A     6,=F'6' 
+		 
+		 BCT   7,ITER_SUM
+       
+*;----------------------------------------
+*; TODO: REDUCIR FRACCION
+*		 MP    RES_DEN,9(3,6)
 *		 UNPK  RESULT,RES_DEN
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 
 * DIVIDO POR EL DEN DE LA 1RA FRACCION  
-         ZAP   DIVIDEND,RES_DEN
-		 ZAP   DIVISOR,3(3,6)
+*         ZAP   DIVIDEND,RES_DEN
+*		 ZAP   DIVISOR,3(3,6)
 		 
-		 DP    DIVIDEND,DIVISOR
-		 LA    7,DIVIDEND   
+*		 DP    DIVIDEND,DIVISOR
+*		 LA    7,DIVIDEND   
 *		 UNPK  RESULT,0(3,7)
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 		 
-		 ZAP   RES_AUX,0(3,7)
-		 MP    RES_AUX,0(3,6)
-		 ZAP   RES_NUM,RES_AUX
+*		 ZAP   RES_AUX,0(3,7)
+*		 MP    RES_AUX,0(3,6)
+*		 ZAP   RES_NUM,RES_AUX
 		 
 *		 UNPK  RESULT,RES_NUM
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 		 
 * DIVIDO POR EL DEN DE LA 2RA FRACCION  
-         ZAP   DIVIDEND,RES_DEN
-		 ZAP   DIVISOR,9(3,6)
+*         ZAP   DIVIDEND,RES_DEN
+*		  ZAP   DIVISOR,9(3,6)
 		 
-		 DP    DIVIDEND,DIVISOR
-		 LA    7,DIVIDEND   
+*		 DP    DIVIDEND,DIVISOR
+*		 LA    7,DIVIDEND   
 *		 UNPK  RESULT,0(3,7)
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 		 
-		 ZAP   RES_AUX,0(3,7)
-		 MP    RES_AUX,6(3,6)
-		 AP    RES_NUM,RES_AUX
+*		 ZAP   RES_AUX,0(3,7)
+*		 MP    RES_AUX,6(3,6)
+*		 AP    RES_NUM,RES_AUX
 		 
 *		 UNPK  RESULT,RES_NUM
 *		 MVZ   RESULT+11(1),=X'FF'
 *		 WTO   MF=(E,RESULT-4)
 		 
+*;***************************
+*;   MUESTRO EL RESULTADO  **
+*;***************************
 		 UNPK  RESULT,RES_NUM
-		 MVZ   RESULT+11(1),=X'FF'
+		 MVZ   RESULT+6(1),=X'FF'
 		 
-		 MVC   RE_SUMA+3(5),RESULT+7
+		 MVC   RE_SUMA+0(3),=C'=: '
+		 MVC   RE_SUMA+3(7),RESULT
 		 
-		 MVC   RE_SUMA+8(1),=C'/'
+		 MVC   RE_SUMA+10(1),=C'/'
 		 
 		 UNPK  RESULT,RES_DEN
-		 MVZ   RESULT+11(1),=X'FF'
-		 MVC   RE_SUMA+9(5),RESULT+7
+		 MVZ   RESULT+6(1),=X'FF'
+		 MVC   RE_SUMA+11(7),RESULT
 		 
 		 WTO   MF=(E,RE_SUMA-4)
 		 
@@ -365,13 +401,13 @@ RES_AUX  DS    PL4
 DIVIDEND DS    PL6
 DIVISOR  DS    PL3
 
-         DC    H'16'
+         DC    H'11'
 		 DC    H'0'
-RESULT   DS    CL12
+RESULT   DS    CL7
 
-         DC    H'34'
+         DC    H'22'
 		 DC    H'0'
-RE_SUMA  DC    C'=:                              '
+RE_SUMA  DS    CL18
 
 WAITECB  DC    F'0'
 
