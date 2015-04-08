@@ -218,15 +218,50 @@ SUMAR    LA    6,MAT
 ORDENAR  LA    6,MAT
          MVC   A_INDICE(10),A_AUX
 
-* LA MAYOR FRACCION AL FINAL *
-         ZAP   A_INDICE,=P'1'
-		 ZAP   A_INDICE+1,=P'0'
+*; LA MAYOR FRACCION AL FINAL *
+         LA    8,A_INDICE
+         LA    7,9
+BURBUJA  LA    6,MAT
+         ZAP   EMP_INDI,0(1,8)
+		 MP    EMP_INDI,=P'6'
+		 CVB   9,EMP_INDI
 		 
-         LA    7,10
-         LA    9,6
+		 AR    6,9
+		 
+		 ZAP   AUXNUM1,0(3,6)
+		 
+		 A     8,=F'1'
+		 LA    6,MAT
+		 
+		 ZAP   EMP_INDI,0(1,8)
+		 MP    EMP_INDI,=P'6'
+		 CVB   9,EMP_INDI
+		 
+		 AR    6,9
+		 
+		 ZAP   AUXNUM2,0(3,6)
+		 
+*; COMPARA EL 1RP VS EL 2DO *
+		 CP   AUXNUM1,AUXNUM2
+		 BE   NEXT
+		 BL   NEXT
+		 BH   SWAPPING	          
+
+SWAPPING WTO   'SWAPPING'
+         ZAP   AUX,0(1,8)
+		 S    8,=F'1'
+		 ZAP   AUX2,0(1,8)
+		 
+		 ZAP   0(1,8),AUX
+		 A     8,=F'1'
+		 ZAP   0(1,8),AUX2	 
+         		 
+NEXT     BCT   7,BURBUJA
+		 
 		 LA    8,A_INDICE
+         LA    7,10		 
 IMPRME_2 LA    6,MAT		 
-* RESUELVO EL OFFSET *
+*; RESUELVO EL OFFSET *
          
 		 ZAP   EMP_INDI,=P'6'
 		 MP    EMP_INDI,0(1,8)
@@ -307,5 +342,7 @@ A_INDICE DS    10P'0'
 A_AUX    DC    X'0C1C2C3C4C5C6C7C8C9C'
 EMP_L2   DC    P'00'
 EMP_INDI DC    P'000000000000000'
+AUX      DS    PL1
+AUX2     DS    PL1
 
 		 END
