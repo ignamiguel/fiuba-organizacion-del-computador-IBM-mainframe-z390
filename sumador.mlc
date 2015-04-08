@@ -3,7 +3,7 @@ TPIBM    SUBENTRY BASES=(3,4)
          
 		 BAL   5,INICIAR
 MENU	 BAL   5,IMPRME_M
-         WTOR  'SELECCIONAR OPCION [0-9]',OPCION,,WAITECB
+         WTOR  'Seleccionar una opcion [1-9]',OPCION,,WAITECB
 		 WAIT  ECB=WAITECB 
          CLC   OPCION,=C'1'
 		 BE    INGRESAR
@@ -15,7 +15,7 @@ MENU	 BAL   5,IMPRME_M
 		 BE    ORDENASC
 		 CLC   OPCION,=C'5'
 		 BE    ORDENDES
-		 CLC   OPCION,=C'0'
+		 CLC   OPCION,=C'9'
 		 BE    FIN
 		 
 FIN      WTO   '=========>    FIN    <========='  
@@ -51,19 +51,19 @@ INITMAT  MVC   0(3,6),=X'00000F'
 IMPRME_M WTO   '---------------------------------'
          WTO   '---------      MENU     ---------'
          WTO   '---------------------------------'
-         WTO   '1) INGRESAR UNA FRACCION'
-         WTO   '2) VER FRACCIONES INGRESADAS'
-         WTO   '3) SUMAR TODAS LAS FRACCIONES'		 
-         WTO   '4) ORDENAR ASC'
-         WTO   '5) ORDENAR DESC'		 
-         WTO   '0) SALIR'		 
+         WTO   '1) Ingresar una fraccion'
+         WTO   '2) Ver fracciones ingresadas'
+         WTO   '3) Sumar todas las fracciones'		 
+         WTO   '4) Ordenar ASC'
+         WTO   '5) Ordenar DESC'		 
+         WTO   '9) Salir'		 
 		 BR    5
 		 
 *************************************
 *******   INGRESAR FRACCION   *******
 *************************************
 INGRESAR LA    6,MAT
-         WTOR  'SELECCIONAR FRACCION A INGRESAR [0-9]',ORDEN,,WAITECB
+         WTOR  'Seleccionar posicion arreglo [0-9]',ORDEN,,WAITECB
 		 WAIT  ECB=WAITECB 
 		 CLC   ORDEN,=C'0'
 		 BL    INVORDEN
@@ -78,21 +78,21 @@ INGRESAR LA    6,MAT
 		 AR    6,9
 		 
 		 LA    7,0
-SIGNO_F  WTOR  'INGRESE SIGNO DE FRACCION (+ O -)',SIGNO,,WAITECB
+SIGNO_F  WTOR  'Ingresar signo (+ o -)',SIGNO,,WAITECB
 		 WAIT  ECB=WAITECB
 		 CLC   SIGNO,=C'+'
 		 BE    NUM_F
 		 CLC   SIGNO,=C'-'
 		 BE    NEGATIVA
-		 WTO   'SIGNO INVALIDO'
+		 WTO   'Signo Invalido!'
 		 B     SIGNO_F
 
 NEGATIVA LA    7,1 
 		 
-NUM_F	 WTOR  'INGRESE EL NUMERADOR (4 DIGITOS)',NUMRDOR,,WAITECB
+NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
          WAIT  ECB=WAITECB
 *; TODO: VALIDAR QUE NO SEA 0000 *		   
-		 WTOR  'INGRESE EL DENOMINADOR (4 DIGITOS)',DENMDOR,,WAITECB
+		 WTOR  'Ingresar el denominador (4 DIGITOS)',DENMDOR,,WAITECB
 		 WAIT  ECB=WAITECB
 *; TODO: VALIDAR QUE NO SEA 0000 *
 		 
@@ -111,7 +111,7 @@ POSITIVA MVC   0(3,6),AUXNUM1
 *;****************************
 *; MENSAJE DE ERROR AUXILIAR *
 *;****************************
-INVORDEN WTO   'ORDEN INVALIDO'
+INVORDEN WTO   'Posicion invalida!'
          B     INGRESAR
 		 
 ***************************
@@ -244,17 +244,26 @@ INCR_MAT A     6,=F'6'
 *;***************************
 *;   MUESTRO EL RESULTADO  **
 *;***************************
-		 UNPK  RESULT,RES_NUM
-		 MVZ   RESULT+6(1),=X'FF'
+         MVC   RE_SUMA+0(3),=C'=: '
 		 
-		 MVC   RE_SUMA+0(3),=C'=: '
-		 MVC   RE_SUMA+3(7),RESULT
+*; PREGUNTO EL SIGNO 
+         MVC   SIGNO,=C' '
+		 CP    RES_NUM,=P'0'
+         BH    TOT_POS		 
+		 BE    TOT_POS
+		 MVC   SIGNO,=C'-'
 		 
-		 MVC   RE_SUMA+10(1),=C'/'
+TOT_POS	 MVC   RE_SUMA+3(1),SIGNO
+
+         UNPK  RESULT,RES_NUM
+		 MVZ   RESULT+6(1),=X'FF'         
+		 MVC   RE_SUMA+4(7),RESULT
+		 
+		 MVC   RE_SUMA+11(1),=C'/'
 		 
 		 UNPK  RESULT,RES_DEN
 		 MVZ   RESULT+6(1),=X'FF'
-		 MVC   RE_SUMA+11(7),RESULT
+		 MVC   RE_SUMA+12(7),RESULT
 		 
 		 WTO   MF=(E,RE_SUMA-4)
 		 
@@ -390,7 +399,7 @@ DENMDOR  DS    CL4
 
          DC    H'26'
 		 DC    H'0'
-FRAC     DC    C'FRACCION X:           '
+FRAC     DC    C'Fraccion X:           '
 
 MAT      DS    20PL3
 
@@ -405,9 +414,9 @@ DIVISOR  DS    PL3
 		 DC    H'0'
 RESULT   DS    CL7
 
-         DC    H'22'
+         DC    H'23'
 		 DC    H'0'
-RE_SUMA  DS    CL18
+RE_SUMA  DS    CL19
 
 WAITECB  DC    F'0'
 
