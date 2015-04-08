@@ -15,6 +15,8 @@ MENU	 BAL   5,IMPRME_M
 		 BE    ORDENASC
 		 CLC   OPCION,=C'5'
 		 BE    ORDENDES
+		 CLC   OPCION,=C'6'
+		 BE    DECIMAL
 		 CLC   OPCION,=C'9'
 		 BE    FIN
 		 
@@ -56,6 +58,7 @@ IMPRME_M WTO   '---------------------------------'
          WTO   '3) Sumar todas las fracciones'		 
          WTO   '4) Ordenar ASC'
          WTO   '5) Ordenar DESC'		 
+         WTO   '6) Calcular expresion decimal'		 
          WTO   '9) Salir'		 
 		 BR    5
 		 
@@ -385,7 +388,48 @@ N_MOST2  A     8,=F'1'
          BCT   7,IMPRME_2
 		 
 		 B     MENU
+**************************************
+*******   EXPRESION DECIMAL    ******* 
+**************************************
+DECIMAL  WTO 'EXPRESION DECIMAL'
+		 LA    6,MAT
+         ZAP   COMA_FLG,=P'0'
+		 LA    10,RE_SUMA
 		 
+*; COPIO NUM A DIVIDENDO Y DEN A DIVISOR
+		 ZAP   OPERAN1,0(3,6)
+		 ZAP   DIVIDEND,0(3,6)
+		 ZAP   DIVISOR,3(3,6)		 
+
+*; COMPARO NUM Y DEN		 
+DEC_COM	 ZAP   DIVIDEND,OPERAN1
+         CP    DIVIDEND,DIVISOR
+		 BL    ES_MENOR
+		 BH    IGL_MAY
+		 BH    IGL_MAY
+
+*; SI ES MENOR, MULTIPLICO EL NUM X 10 *
+ES_MENOR MP    OPERAN1,=P'10'
+         
+*; VERIFICO SI TENGO QUE PONER LA COMA *		 
+		 CP    COMA_FLG,=P'0'
+		 BNE   SIN_COMA         
+		 MVC   0(2,10),=C'0,'
+		 A     10,=F'2'
+		 ZAP   COMA_FLG,=P'1'
+		 B     DEC_COM
+		 
+SIN_COMA MVC   0(1,10),=C'0'
+		 A     10,=F'1'
+		 B     DEC_COM
+
+IGL_MAY  DP    DIVIDEND,DIVISOR
+         LA    7,DIVIDEND   
+		 UNPK  RESULT,0(3,7)
+		 MVZ   RESULT+6(1),=X'FF'
+		 
+		 MVC   0(1,10),RESULT+6
+		 B     MENU		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
@@ -436,5 +480,6 @@ OPERAN1  DS    PL8
 OPERAN2  DS    PL8
 
 ORDN_ASC DS    PL1
+COMA_FLG  DS    PL1
 
 		 END
