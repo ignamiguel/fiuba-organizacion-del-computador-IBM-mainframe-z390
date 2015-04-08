@@ -218,9 +218,11 @@ SUMAR    LA    6,MAT
 ORDENAR  LA    6,MAT
          MVC   A_INDICE(10),A_AUX
 
-*; LA MAYOR FRACCION AL FINAL *
-         LA    8,A_INDICE
+         LA 10,9
+*; ITERAR TODAS LAS POSICIONES *
+NACHO    LA    8,A_INDICE
          LA    7,9
+*; LA MAYOR FRACCION AL FINAL *
 BURBUJA  LA    6,MAT
          ZAP   EMP_INDI,0(1,8)
 		 MP    EMP_INDI,=P'6'
@@ -241,14 +243,13 @@ BURBUJA  LA    6,MAT
 		 
 		 ZAP   AUXNUM2,0(3,6)
 		 
-*; COMPARA EL 1RP VS EL 2DO *
+*; COMPARA EL 1RO VS EL 2DO *
 		 CP   AUXNUM1,AUXNUM2
 		 BE   NEXT
 		 BL   NEXT
 		 BH   SWAPPING	          
 
-SWAPPING WTO   'SWAPPING'
-         ZAP   AUX,0(1,8)
+SWAPPING ZAP   AUX,0(1,8)
 		 S    8,=F'1'
 		 ZAP   AUX2,0(1,8)
 		 
@@ -257,7 +258,10 @@ SWAPPING WTO   'SWAPPING'
 		 ZAP   0(1,8),AUX2	 
          		 
 NEXT     BCT   7,BURBUJA
-		 
+         BCT   10,NACHO
+*;********************************
+*; MUESTRO ORDENADO
+*;********************************	 
 		 LA    8,A_INDICE
          LA    7,10		 
 IMPRME_2 LA    6,MAT		 
