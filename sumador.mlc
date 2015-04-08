@@ -16,7 +16,7 @@ MENU	 BAL   5,IMPRME_M
 		 CLC   OPCION,=C'5'
 		 BE    ORDENDES
 		 CLC   OPCION,=C'6'
-		 BE    DECIMAL
+		 BE    EX_DECIM
 		 CLC   OPCION,=C'9'
 		 BE    FIN
 		 
@@ -35,7 +35,7 @@ INITMAT  MVC   0(3,6),=X'00000F'
 *; CARGO VALORES DE PREUBA  **
 *;****************************
          LA    6,MAT
-         MVC   0(3,6),=X'00001F'
+         MVC   0(3,6),=X'00011F'
          MVC   3(3,6),=X'00002F'
          MVC   6(3,6),=X'00001F'
          MVC   9(3,6),=X'00003F'
@@ -391,45 +391,77 @@ N_MOST2  A     8,=F'1'
 **************************************
 *******   EXPRESION DECIMAL    ******* 
 **************************************
-DECIMAL  WTO 'EXPRESION DECIMAL'
-		 LA    6,MAT
-         ZAP   COMA_FLG,=P'0'
+EX_DECIM LA    6,MAT
+         
 		 LA    10,RE_SUMA
+		 LA    11,DCIMALES
+		 LA    9,5
 		 
 *; COPIO NUM A DIVIDENDO Y DEN A DIVISOR
 		 ZAP   OPERAN1,0(3,6)
 		 ZAP   DIVIDEND,0(3,6)
-		 ZAP   DIVISOR,3(3,6)		 
+		 ZAP   DIVISOR,3(3,6)
+         ZAP   AUXNUM1,=P'0'		 
 
 *; COMPARO NUM Y DEN		 
-DEC_COM	 ZAP   DIVIDEND,OPERAN1
-         CP    DIVIDEND,DIVISOR
-		 BL    ES_MENOR
-		 BH    IGL_MAY
-		 BH    IGL_MAY
+DEC_COM	 CP    DIVIDEND,DIVISOR
+		 BL    S_ENTERA
+		 BH    C_ENTERA
+		 BE    C_ENTERA
 
-*; SI ES MENOR, MULTIPLICO EL NUM X 10 *
-ES_MENOR MP    OPERAN1,=P'10'
-         
-*; VERIFICO SI TENGO QUE PONER LA COMA *		 
-		 CP    COMA_FLG,=P'0'
-		 BNE   SIN_COMA         
-		 MVC   0(2,10),=C'0,'
-		 A     10,=F'2'
-		 ZAP   COMA_FLG,=P'1'
-		 B     DEC_COM
-		 
-SIN_COMA MVC   0(1,10),=C'0'
-		 A     10,=F'1'
-		 B     DEC_COM
+*; SIN PARTE ENTERA   *
+S_ENTERA B     P_DECIML
 
-IGL_MAY  DP    DIVIDEND,DIVISOR
+*; CON PARTE ENTERA    *		 
+C_ENTERA DP    DIVIDEND,DIVISOR
          LA    7,DIVIDEND   
+		 ZAP   AUXNUM1,0(3,7)
+		 ZAP   OPERAN1,3(3,7)
+		 ZAP   DIVIDEND,OPERAN1
+		 B     DEC_COM
+
+*; PARTE DECIMAL - MULTIPLICO EL NUM X 10 *
+*;       LA    9,5           
+P_DECIML MP    OPERAN1,=P'10'
+         ZAP   DIVIDEND,OPERAN1
+		 
+*; VUELVO A COMPARAR *
+		 CP    DIVIDEND,DIVISOR
+		 BE    NACHO
+		 BH    NACHO		 
+		 
+		 MVC   0(1,11),=C'0'
+		 A     11,=F'1'
+		 B     MIGUEL
+		 
+NACHO	 DP    DIVIDEND,DIVISOR
+         LA    7,DIVIDEND   
+
+*; GUARDO EL RESTO *		 
+		 ZAP   OPERAN1,3(3,7)
+
+*; OBTENGO EL COCIENTE *		 
 		 UNPK  RESULT,0(3,7)
 		 MVZ   RESULT+6(1),=X'FF'
+		 MVC   0(1,11),RESULT+6
+		 A     11,=F'1'
 		 
-		 MVC   0(1,10),RESULT+6
-		 B     MENU		 
+		 ZAP   DIVIDEND,OPERAN1
+MIGUEL	 BCT   9,P_DECIML
+		 
+*; CONVIERTO A CARACTER LA PARTE ENTERA *		     
+		 UNPK  ENTEROS,AUXNUM1
+		 MVZ   ENTEROS+7(1),=X'FF'
+		 
+		 MVC   RE_SUMA(4),ENTEROS+4
+		 MVC   RE_SUMA+4(1),=C','
+		 MVC   RE_SUMA+5(5),DCIMALES
+		 MVC   RE_SUMA+10(10),=C'           ' 
+		 
+		 WTO   MF=(E,RE_SUMA-4)
+		 
+		 B     MENU
+		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
@@ -480,6 +512,9 @@ OPERAN1  DS    PL8
 OPERAN2  DS    PL8
 
 ORDN_ASC DS    PL1
-COMA_FLG  DS    PL1
+COMA_FLG DS    PL1
+
+DCIMALES DS    CL5
+ENTEROS  DS    CL8
 
 		 END
