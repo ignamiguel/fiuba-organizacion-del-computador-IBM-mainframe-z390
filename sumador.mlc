@@ -393,7 +393,9 @@ N_MOST2  A     8,=F'1'
 **************************************
 EX_DECIM LA    6,MAT
          
-		 LA    10,RE_SUMA
+		 LA    8,10
+		 
+EJE_CALC LA    10,RE_SUMA
 		 LA    11,DCIMALES
 		 LA    9,5
 		 
@@ -403,6 +405,16 @@ EX_DECIM LA    6,MAT
 		 ZAP   DIVISOR,3(3,6)
          ZAP   AUXNUM1,=P'0'		 
 
+         MVC   SIGNO,=C' '
+*; SI EL NUM = 0, PROXIMA *
+         CP    OPERAN1,=P'0'
+         BE    EJE_SIG 
+*; OBTENGO EL SIGNO *         
+         BH    DEC_COM
+		 MVC   SIGNO,=C'-'
+         MP    DIVIDEND,=P'-1'
+     	 ZAP   OPERAN1,DIVIDEND
+		 
 *; COMPARO NUM Y DEN		 
 DEC_COM	 CP    DIVIDEND,DIVISOR
 		 BL    S_ENTERA
@@ -420,21 +432,20 @@ C_ENTERA DP    DIVIDEND,DIVISOR
 		 ZAP   DIVIDEND,OPERAN1
 		 B     DEC_COM
 
-*; PARTE DECIMAL - MULTIPLICO EL NUM X 10 *
-*;       LA    9,5           
+*; PARTE DECIMAL - MULTIPLICO EL NUM X 10 *           
 P_DECIML MP    OPERAN1,=P'10'
          ZAP   DIVIDEND,OPERAN1
 		 
 *; VUELVO A COMPARAR *
 		 CP    DIVIDEND,DIVISOR
-		 BE    NACHO
-		 BH    NACHO		 
+		 BE    EJE_DIV
+		 BH    EJE_DIV		 
 		 
 		 MVC   0(1,11),=C'0'
 		 A     11,=F'1'
-		 B     MIGUEL
+		 B     EJE_AJST
 		 
-NACHO	 DP    DIVIDEND,DIVISOR
+EJE_DIV	 DP    DIVIDEND,DIVISOR
          LA    7,DIVIDEND   
 
 *; GUARDO EL RESTO *		 
@@ -447,18 +458,24 @@ NACHO	 DP    DIVIDEND,DIVISOR
 		 A     11,=F'1'
 		 
 		 ZAP   DIVIDEND,OPERAN1
-MIGUEL	 BCT   9,P_DECIML
+EJE_AJST BCT   9,P_DECIML
 		 
 *; CONVIERTO A CARACTER LA PARTE ENTERA *		     
 		 UNPK  ENTEROS,AUXNUM1
 		 MVZ   ENTEROS+7(1),=X'FF'
 		 
-		 MVC   RE_SUMA(4),ENTEROS+4
-		 MVC   RE_SUMA+4(1),=C','
-		 MVC   RE_SUMA+5(5),DCIMALES
-		 MVC   RE_SUMA+10(10),=C'           ' 
+*; COPIO EL SIGNO *
+		 MVC   RE_SUMA(1),SIGNO
+		 MVC   RE_SUMA+1(4),ENTEROS+4
+		 MVC   RE_SUMA+5(1),=C','
+		 MVC   RE_SUMA+6(5),DCIMALES
+		 MVC   RE_SUMA+11(9),=C'          ' 
 		 
 		 WTO   MF=(E,RE_SUMA-4)
+
+*; PROCESO LA FRACCION SIGUIENTE *		 
+EJE_SIG	 A     6,=F'6'
+		 BCT   8,EJE_CALC
 		 
 		 B     MENU
 		 
