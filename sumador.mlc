@@ -17,6 +17,8 @@ MENU	 BAL   5,IMPRME_M
 		 BE    ORDENDES
 		 CLC   OPCION,=C'6'
 		 BE    EX_DECIM
+		 CLC   OPCION,=C'7'
+		 BE    EX_FRACC
 		 CLC   OPCION,=C'9'
 		 BE    FIN
 		 
@@ -32,7 +34,7 @@ INITMAT  MVC   0(3,6),=X'00000F'
          LA    6,3(6)
          BCT   9,INITMAT
 *;****************************
-*; CARGO VALORES DE PREUBA  **
+*; CARGO VALORES DE PRUEBA  **
 *;****************************
          LA    6,MAT
          MVC   0(3,6),=X'00011F'
@@ -58,7 +60,8 @@ IMPRME_M WTO   '---------------------------------'
          WTO   '3) Sumar todas las fracciones'		 
          WTO   '4) Ordenar ASC'
          WTO   '5) Ordenar DESC'		 
-         WTO   '6) Calcular expresion decimal'		 
+         WTO   '6) Calcular expresion decimal'	
+         WTO   '7) Forma fraccionaria de un nro periodico'	
          WTO   '9) Salir'		 
 		 BR    5
 		 
@@ -99,7 +102,7 @@ NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
 		 WAIT  ECB=WAITECB
 *; TODO: VALIDAR QUE NO SEA 0000 *
 		 
-*;--- EMPAQUETO ---*
+*; EMPAQUETO *
 		 PACK  AUXNUM1,NUMRDOR
 		 PACK  AUXNUM2,DENMDOR		 
 		 
@@ -175,34 +178,22 @@ ITER_SUM	 ZAP   RES_AUX,RES_DEN
 		 
 *; MULTIPLICO RES_DEN X EL DEN DE LA FRACCION		 
 		 MP    RES_DEN,3(3,6)
-*		 UNPK  RESULT,RES_DEN
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
 
 *; MULTIPLICO RES_AUX X EL NUM DE LA FRACCION		 
 		 MP    RES_AUX,0(3,6)
-*		 UNPK  RESULT,RES_DEN
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
 
 *; MULTIPLICO RES_NUM X EL DEN DE LA FRACCION		 
 		 MP    RES_NUM,3(3,6)
-*		 UNPK  RESULT,RES_DEN
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
 
 *; SUMO RES_NUM + RES_AUX		 
 		 AP    RES_NUM,RES_AUX
-*		 UNPK  RESULT,RES_DEN
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
          
-INCR_MAT A     6,=F'6' 
-		 
+*; INCREMENTO EL REGISTRO APUNTANDO A MATRIX 
+INCR_MAT A     6,=F'6' 		 
 		 BCT   7,ITER_SUM
        
 *;----------------------------------------
-*; TODO: REDUCIR FRACCION
+*; TODO: REDUCIR FRACCION IRREDUCTIBLE
 *		 MP    RES_DEN,9(3,6)
 *		 UNPK  RESULT,RES_DEN
 *		 MVZ   RESULT+11(1),=X'FF'
@@ -283,7 +274,7 @@ ORDENAR  MVC   A_INDICE(10),A_AUX
 *; ITERAR TODAS LAS POSICIONES *
 VUELTA_B LA    8,A_INDICE
          LA    7,9
-*; LA MAYOR FRACCION AL FINAL *
+*; METODO DEL BURBUJEO  *
 BURBUJA  LA    6,MAT
          ZAP   EMP_INDI,0(1,8)
 		 MP    EMP_INDI,=P'6'
@@ -318,14 +309,14 @@ BURBUJA  LA    6,MAT
 *;   ORDEN ASC O DESC  **
 *;***********************
          CP   ORDN_ASC,=P'1'
-		 BE   ES_ASC
+		 BE   OR_ASC
 		 
-ES_DESC	 CP   OPERAN2,OPERAN1
+OR_DESC	 CP   OPERAN2,OPERAN1
          BE   NEXT
 		 BL   NEXT
 		 BH   SWAPPING
 		 
-ES_ASC	 CP   OPERAN1,OPERAN2
+OR_ASC	 CP   OPERAN1,OPERAN2
 		 BE   NEXT
 		 BL   NEXT
 		 BH   SWAPPING	          
@@ -477,6 +468,12 @@ EJE_AJST BCT   9,P_DECIML
 EJE_SIG	 A     6,=F'6'
 		 BCT   8,EJE_CALC
 		 
+		 B     MENU
+
+*******************************************
+*******   EXPRESION FRACCIONARIA    ******* 
+*******************************************
+EX_FRACC WTO   'HOLA MUNDO' 
 		 B     MENU
 		 
 ********************************************
