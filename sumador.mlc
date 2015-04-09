@@ -473,7 +473,48 @@ EJE_SIG	 A     6,=F'6'
 *******************************************
 *******   EXPRESION FRACCIONARIA    ******* 
 *******************************************
-EX_FRACC WTO   'HOLA MUNDO' 
+EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
+		 WAIT  ECB=WAITECB 
+*EX_FRACC MVC   NUMRDOR,=C'0000' 
+		 
+		 PACK  AUXNUM1,NUMRDOR		 
+		 
+		 LA    7,DENMDOR
+		 
+		 WTOR  'Parte decimal periodica [4 DIGITOS]',DENMDOR,,WAITECB
+		 WAIT  ECB=WAITECB 
+*		 MVC   DENMDOR,=C'0003' 
+		 
+		 PACK  AUXNUM2,DENMDOR
+		 
+*; MUESTRO NUMERO INGRESADO *
+*; PARTE ENTERA *
+         MVC   RE_SUMA(19),=C'                     '		 
+		 MVC   RE_SUMA(1),=C' '
+		 MVC   RE_SUMA+1(4),NUMRDOR
+		 MVC   RE_SUMA+5(1),=C','
+
+*; PARTE DECIMAL *
+         LA    8,RE_SUMA
+         A     8,=F'6'
+		 LA    9,4
+		 
+*; NO COPIO LOS CEROS A LA IZQUIERDA *		 
+COPIAR	 CLC   0(1,7),=C'0'
+		 BE    NO_COPIO
+		 
+		 MVC   0(1,8),0(7)
+		 A     8,=F'1'
+		 A     7,=F'1'
+		 BCT   9,COPIAR
+		 B     NACHO
+		 
+NO_COPIO A     7,=F'1' 		 
+		 BCT   9,COPIAR
+
+NACHO	 MVC   0(3,8),=C'...'
+		 WTO   MF=(E,RE_SUMA-4)
+         B     MENU		 
 		 B     MENU
 		 
 ********************************************
