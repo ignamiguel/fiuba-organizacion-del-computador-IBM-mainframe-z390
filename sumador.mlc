@@ -531,16 +531,16 @@ IMP_PERI MVC   0(3,8),=C'...'
 		 BH    M_UNO
 		 BE    M_UNO
 
-M_MIL    ZAP   RES_NUM,=P'1000'
+M_MIL    ZAP   RES_NUM,=P'10000'
          ZAP   AUXNUM3,=P'9999'  
          B     EJE_MUL
-M_CIEN   ZAP   RES_NUM,=P'100'
+M_CIEN   ZAP   RES_NUM,=P'1000'
          ZAP   AUXNUM3,=P'999'
          B     EJE_MUL
-M_DIEZ   ZAP   RES_NUM,=P'10'
+M_DIEZ   ZAP   RES_NUM,=P'100'
          ZAP   AUXNUM3,=P'99'
          B     EJE_MUL
-M_UNO    ZAP   RES_NUM,=P'1'
+M_UNO    ZAP   RES_NUM,=P'10'
          ZAP   AUXNUM3,=P'9'
 
 EJE_MUL  MP    RES_NUM,AUXNUM1
