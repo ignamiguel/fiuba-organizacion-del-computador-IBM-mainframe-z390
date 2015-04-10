@@ -487,7 +487,7 @@ EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
 		 
 		 PACK  AUXNUM2,DENMDOR
 		 
-*; MUESTRO NUMERO INGRESADO *
+*; AJUSTO NUMERO INGRESADO PARA MOSTRAR *
 *; PARTE ENTERA *
          MVC   RE_SUMA(19),=C'                     '		 
 		 MVC   RE_SUMA(1),=C' '
@@ -499,23 +499,73 @@ EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
          A     8,=F'6'
 		 LA    9,4
 		 
-*; NO COPIO LOS CEROS A LA IZQUIERDA *		 
-COPIAR	 CLC   0(1,7),=C'0'
+*; NO COPIO LOS CEROS A LA IZQUIERDA *
+*; DE LA PARTE DECIMAL *		 
+EVAL_CR  CLC   0(1,7),=C'0'
 		 BE    NO_COPIO
 		 
-		 MVC   0(1,8),0(7)
+COPIAR_C MVC   0(1,8),0(7)
 		 A     8,=F'1'
 		 A     7,=F'1'
-		 BCT   9,COPIAR
-		 B     NACHO
+		 BCT   9,COPIAR_C
+		 B     IMP_PERI
 		 
 NO_COPIO A     7,=F'1' 		 
-		 BCT   9,COPIAR
+		 BCT   9,EVAL_CR
 
-NACHO	 MVC   0(3,8),=C'...'
+IMP_PERI MVC   0(3,8),=C'...'
 		 WTO   MF=(E,RE_SUMA-4)
-         B     MENU		 
-		 B     MENU
+         
+*; EXPRESAR COMO FRACCION *
+*; CUENTO LAS CIFRAS DECIMALES *
+         CP    AUXNUM2,=P'1000'
+		 BH    M_MIL  
+		 BE    M_MIL
+		 CP    AUXNUM2,=P'100'		 
+		 BH    M_CIEN
+		 BE	   M_CIEN
+		 CP    AUXNUM2,=P'10'
+		 BH    M_DIEZ
+		 BE    M_DIEZ
+		 CP    AUXNUM2,=P'1'
+		 BH    M_UNO
+		 BE    M_UNO
+
+M_MIL    ZAP   RES_NUM,=P'1000'
+         ZAP   AUXNUM3,=P'9999'  
+         B     EJE_MUL
+M_CIEN   ZAP   RES_NUM,=P'100'
+         ZAP   AUXNUM3,=P'999'
+         B     EJE_MUL
+M_DIEZ   ZAP   RES_NUM,=P'10'
+         ZAP   AUXNUM3,=P'99'
+         B     EJE_MUL
+M_UNO    ZAP   RES_NUM,=P'1'
+         ZAP   AUXNUM3,=P'9'
+
+EJE_MUL  MP    RES_NUM,AUXNUM1
+		 AP    RES_NUM,AUXNUM2
+		 SP    RES_NUM,AUXNUM1
+		 
+*; MOSTRAR RESULTADO *
+*; PARTE ENTERA *
+         MVC   RE_SUMA(19),=C'                     '		 
+		 MVC   RE_SUMA(1),=C' '
+		 
+		 UNPK  RESULT,RES_NUM
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+1(7),RESULT
+		 MVC   RE_SUMA+8(1),=C'/'
+		 
+		 UNPK  RESULT,AUXNUM3
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+9(7),RESULT
+
+		 WTO   MF=(E,RE_SUMA-4)	 
+		 
+	     B     MENU		 
 		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
