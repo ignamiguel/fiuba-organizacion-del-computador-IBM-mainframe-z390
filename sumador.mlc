@@ -1,0 +1,625 @@
+TPIBM    SUBENTRY BASES=(3,4)         
+         WTO   '=========>    INICIO    <========='         
+         
+		 BAL   5,INICIAR
+MENU	 BAL   5,IMPRME_M
+         WTOR  'Seleccionar una opcion [1-9]',OPCION,,WAITECB
+		 WAIT  ECB=WAITECB 
+         CLC   OPCION,=C'1'
+		 BE    INGRESAR
+		 CLC   OPCION,=C'2'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'3'
+		 BE    SUMAR
+		 CLC   OPCION,=C'4'
+		 BE    ORDENASC
+		 CLC   OPCION,=C'5'
+		 BE    ORDENDES
+		 CLC   OPCION,=C'6'
+		 BE    EX_DECIM
+		 CLC   OPCION,=C'7'
+		 BE    EX_FRACC
+		 CLC   OPCION,=C'9'
+		 BE    FIN
+		 
+FIN      WTO   '=========>    FIN    <========='  
+         SUBEXIT
+
+*************************************
+*******   INICIAR VARIABLES   *******
+*************************************
+INICIAR  LA    6,MAT
+         LA    9,20
+INITMAT  MVC   0(3,6),=X'00000F'
+         LA    6,3(6)
+         BCT   9,INITMAT
+*;****************************
+*; CARGO VALORES DE PRUEBA  **
+*;****************************
+         LA    6,MAT
+         MVC   0(3,6),=X'00011F'
+         MVC   3(3,6),=X'00002F'
+         MVC   6(3,6),=X'00001F'
+         MVC   9(3,6),=X'00003F'
+		 MVC   12(3,6),=X'00001D'
+         MVC   15(3,6),=X'00002F'
+         MVC   18(3,6),=X'00001F'
+         MVC   21(3,6),=X'00001F'
+		 MVC   24(3,6),=X'00005F'
+         MVC   27(3,6),=X'00003F'
+         BR    5
+
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
+         WTO   '---------      MENU     ---------'
+         WTO   '---------------------------------'
+         WTO   '1) Ingresar una fraccion'
+         WTO   '2) Ver fracciones ingresadas'
+         WTO   '3) Sumar todas las fracciones'		 
+         WTO   '4) Ordenar ASC'
+         WTO   '5) Ordenar DESC'		 
+         WTO   '6) Calcular expresion decimal'	
+         WTO   '7) Forma fraccionaria de un nro periodico'	
+         WTO   '9) Salir'		 
+		 BR    5
+		 
+*************************************
+*******   INGRESAR FRACCION   *******
+*************************************
+INGRESAR LA    6,MAT
+         WTOR  'Seleccionar posicion arreglo [0-9]',ORDEN,,WAITECB
+		 WAIT  ECB=WAITECB 
+		 CLC   ORDEN,=C'0'
+		 BL    INVORDEN
+		 CLC   ORDEN,=C'9'
+		 BH    INVORDEN
+
+		 PACK  ORDENPCK,ORDEN
+		 CVB   9,ORDENPCK
+		 LA    8,0
+		 
+		 M     8,=F'6'
+		 AR    6,9
+		 
+		 LA    7,0
+SIGNO_F  WTOR  'Ingresar signo (+ o -)',SIGNO,,WAITECB
+		 WAIT  ECB=WAITECB
+		 CLC   SIGNO,=C'+'
+		 BE    NUM_F
+		 CLC   SIGNO,=C'-'
+		 BE    NEGATIVA
+		 WTO   'Signo Invalido!'
+		 B     SIGNO_F
+
+NEGATIVA LA    7,1 
+		 
+NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
+         WAIT  ECB=WAITECB
+*; TODO: VALIDAR QUE NO SEA 0000 *		   
+		 WTOR  'Ingresar el denominador (4 DIGITOS)',DENMDOR,,WAITECB
+		 WAIT  ECB=WAITECB
+*; TODO: VALIDAR QUE NO SEA 0000 *
+		 
+*; EMPAQUETO *
+		 PACK  AUXNUM1,NUMRDOR
+		 PACK  AUXNUM2,DENMDOR		 
+		 
+		 LA    8,0
+		 CR    7,8
+		 BE    POSITIVA		 
+         MVN   AUXNUM1+2(1),=X'DD'
+		 
+POSITIVA MVC   0(3,6),AUXNUM1	 
+         MVC   3(3,6),AUXNUM2
+         B     MENU
+*;****************************
+*; MENSAJE DE ERROR AUXILIAR *
+*;****************************
+INVORDEN WTO   'Posicion invalida!'
+         B     INGRESAR
+		 
+***************************
+*******   MOSTRAR   ******* 
+***************************
+MOSTRAR  LA    6,MAT
+         ZAP   ORDENPCK,=P'0'
+         
+         LA    7,10
+         LA    9,6
+IMPRME_F MVC   AUXNUM1,0(6)
+		 MVC   AUXNUM2,3(6)
+		 
+		 CP    AUXNUM1,=P'0'
+		 BE    NO_MOST
+		 
+		 UNPK  NUMRDOR,AUXNUM1
+		 UNPK  DENMDOR,AUXNUM2
+ 
+         MVC   SIGNO,=C' '
+		 CP    AUXNUM1,=P'0'
+		 BH    SIN_SIGN
+		 BE    SIN_SIGN
+         MVC   SIGNO,=C'-'
+	     MVZ   NUMRDOR+3(1),=X'FF'
+		 
+SIN_SIGN UNPK  ORDEN,ORDENPCK
+         MVZ   ORDEN(1),=X'FF' 
+         MVC   FRAC+9(1),ORDEN
+         MVC   FRAC+12(1),SIGNO
+         MVC   FRAC+13(4),NUMRDOR
+         MVC   FRAC+17(1),=C'/'
+         MVC   FRAC+18(4),DENMDOR
+		 WTO   MF=(E,FRAC-4)
+
+NO_MOST  AP    ORDENPCK,=P'1'
+		 AR    6,9
+		 BCT   7,IMPRME_F
+		 
+		 B     MENU
+*************************************
+*******    SUMAR FRACCIONES   ******* 
+*************************************
+SUMAR    LA    6,MAT
+         LA    7,10
+
+*; INICIALIZO El RES_NUM EN 0 Y RES_DEN EN 1
+*; ELEMENTO NEUTRO PARA LA SUMA
+         ZAP   RES_NUM,=P'0'
+         ZAP   RES_DEN,=P'1'
+    
+*; ME GUARDO EL RES_DEN ANTERIOR
+ITER_SUM	 ZAP   RES_AUX,RES_DEN
+		 
+*; SI EL DEN = 0, NO LO SUMO 
+         CP    3(3,6),=P'0'
+		 BE    INCR_MAT
+		 
+*; MULTIPLICO RES_DEN X EL DEN DE LA FRACCION		 
+		 MP    RES_DEN,3(3,6)
+
+*; MULTIPLICO RES_AUX X EL NUM DE LA FRACCION		 
+		 MP    RES_AUX,0(3,6)
+
+*; MULTIPLICO RES_NUM X EL DEN DE LA FRACCION		 
+		 MP    RES_NUM,3(3,6)
+
+*; SUMO RES_NUM + RES_AUX		 
+		 AP    RES_NUM,RES_AUX
+         
+*; INCREMENTO EL REGISTRO APUNTANDO A MATRIX 
+INCR_MAT A     6,=F'6' 		 
+		 BCT   7,ITER_SUM
+       
+*;----------------------------------------
+*; TODO: REDUCIR FRACCION IRREDUCTIBLE
+*		 MP    RES_DEN,9(3,6)
+*		 UNPK  RESULT,RES_DEN
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+
+* DIVIDO POR EL DEN DE LA 1RA FRACCION  
+*         ZAP   DIVIDEND,RES_DEN
+*		 ZAP   DIVISOR,3(3,6)
+		 
+*		 DP    DIVIDEND,DIVISOR
+*		 LA    7,DIVIDEND   
+*		 UNPK  RESULT,0(3,7)
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+		 
+*		 ZAP   RES_AUX,0(3,7)
+*		 MP    RES_AUX,0(3,6)
+*		 ZAP   RES_NUM,RES_AUX
+		 
+*		 UNPK  RESULT,RES_NUM
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+		 
+* DIVIDO POR EL DEN DE LA 2RA FRACCION  
+*         ZAP   DIVIDEND,RES_DEN
+*		  ZAP   DIVISOR,9(3,6)
+		 
+*		 DP    DIVIDEND,DIVISOR
+*		 LA    7,DIVIDEND   
+*		 UNPK  RESULT,0(3,7)
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+		 
+*		 ZAP   RES_AUX,0(3,7)
+*		 MP    RES_AUX,6(3,6)
+*		 AP    RES_NUM,RES_AUX
+		 
+*		 UNPK  RESULT,RES_NUM
+*		 MVZ   RESULT+11(1),=X'FF'
+*		 WTO   MF=(E,RESULT-4)
+		 
+*;***************************
+*;   MUESTRO EL RESULTADO  **
+*;***************************
+         MVC   RE_SUMA+0(3),=C'=: '
+		 
+*; PREGUNTO EL SIGNO 
+         MVC   SIGNO,=C' '
+		 CP    RES_NUM,=P'0'
+         BH    TOT_POS		 
+		 BE    TOT_POS
+		 MVC   SIGNO,=C'-'
+		 
+TOT_POS	 MVC   RE_SUMA+3(1),SIGNO
+
+         UNPK  RESULT,RES_NUM
+		 MVZ   RESULT+6(1),=X'FF'         
+		 MVC   RE_SUMA+4(7),RESULT
+		 
+		 MVC   RE_SUMA+11(1),=C'/'
+		 
+		 UNPK  RESULT,RES_DEN
+		 MVZ   RESULT+6(1),=X'FF'
+		 MVC   RE_SUMA+12(7),RESULT
+		 
+		 WTO   MF=(E,RE_SUMA-4)
+		 
+		 B     MENU
+		 
+**************************************
+*******   ORDENAR FRACCIONES   ******* 
+**************************************
+ORDENASC ZAP   ORDN_ASC,=P'1'
+         B     ORDENAR
+ORDENDES ZAP   ORDN_ASC,=P'0'         
+ORDENAR  MVC   A_INDICE(10),A_AUX
+         LA 10,9
+*; ITERAR TODAS LAS POSICIONES *
+VUELTA_B LA    8,A_INDICE
+         LA    7,9
+*; METODO DEL BURBUJEO  *
+BURBUJA  LA    6,MAT
+         ZAP   EMP_INDI,0(1,8)
+		 MP    EMP_INDI,=P'6'
+		 CVB   9,EMP_INDI
+		 
+		 AR    6,9
+		 
+		 ZAP   AUXNUM1,0(3,6)
+		 ZAP   AUXNUM2,3(3,6)
+		 
+		 A     8,=F'1'
+		 LA    6,MAT
+		 
+		 ZAP   EMP_INDI,0(1,8)
+		 MP    EMP_INDI,=P'6'
+		 CVB   9,EMP_INDI
+		 
+		 AR    6,9
+		 
+		 ZAP   AUXNUM3,0(3,6)
+		 ZAP   AUXNUM4,3(3,6)
+
+*;***********************
+*;       COMPARAR      **
+*;***********************
+		 ZAP  OPERAN1,AUXNUM1
+		 MP   OPERAN1,AUXNUM4
+		 
+		 ZAP  OPERAN2,AUXNUM3
+		 MP   OPERAN2,AUXNUM2	 
+*;***********************
+*;   ORDEN ASC O DESC  **
+*;***********************
+         CP   ORDN_ASC,=P'1'
+		 BE   OR_ASC
+		 
+OR_DESC	 CP   OPERAN2,OPERAN1
+         BE   NEXT
+		 BL   NEXT
+		 BH   SWAPPING
+		 
+OR_ASC	 CP   OPERAN1,OPERAN2
+		 BE   NEXT
+		 BL   NEXT
+		 BH   SWAPPING	          
+
+*;************************
+*;      SWAPPING        **
+*;************************
+SWAPPING ZAP   AUX,0(1,8)
+		 S    8,=F'1'
+		 ZAP   AUX2,0(1,8)
+		 
+		 ZAP   0(1,8),AUX
+		 A     8,=F'1'
+		 ZAP   0(1,8),AUX2	 
+         		 
+NEXT     BCT   7,BURBUJA
+         BCT   10,VUELTA_B
+*;****************************
+*;      MUESTRO ORDENADO    **
+*;****************************	 
+		 LA    8,A_INDICE
+         LA    7,10		 
+IMPRME_2 LA    6,MAT		 
+*; RESUELVO EL OFFSET *
+         
+		 ZAP   EMP_INDI,=P'6'
+		 MP    EMP_INDI,0(1,8)
+         CVB   9,EMP_INDI         
+         AR    6,9
+		 
+         MVC   AUXNUM1,0(6)
+		 MVC   AUXNUM2,3(6)
+		 
+		 CP    AUXNUM1,=P'0'
+		 BE    N_MOST2
+		 
+		 UNPK  NUMRDOR,AUXNUM1
+		 UNPK  DENMDOR,AUXNUM2
+ 
+         MVC   SIGNO,=C' '
+		 CP    AUXNUM1,=P'0'
+		 BH    S_SIGN2
+		 BE    S_SIGN2
+         MVC   SIGNO,=C'-'
+	     MVZ   NUMRDOR+3(1),=X'FF'
+		 
+		 ZAP   ORDENPCK,0(1,8)
+		 
+S_SIGN2  ZAP   ORDENPCK,0(1,8)
+         UNPK  ORDEN,ORDENPCK
+         MVZ   ORDEN(1),=X'FF' 
+         MVC   FRAC+9(1),ORDEN
+         MVC   FRAC+12(1),SIGNO
+         MVC   FRAC+13(4),NUMRDOR
+         MVC   FRAC+17(1),=C'/'
+         MVC   FRAC+18(4),DENMDOR
+		 WTO   MF=(E,FRAC-4)
+
+N_MOST2  A     8,=F'1'
+         BCT   7,IMPRME_2
+		 
+		 B     MENU
+**************************************
+*******   EXPRESION DECIMAL    ******* 
+**************************************
+EX_DECIM LA    6,MAT
+         
+		 LA    8,10
+		 
+EJE_CALC LA    10,RE_SUMA
+		 LA    11,DCIMALES
+		 LA    9,5
+		 
+*; COPIO NUM A DIVIDENDO Y DEN A DIVISOR
+		 ZAP   OPERAN1,0(3,6)
+		 ZAP   DIVIDEND,0(3,6)
+		 ZAP   DIVISOR,3(3,6)
+         ZAP   AUXNUM1,=P'0'		 
+
+         MVC   SIGNO,=C' '
+*; SI EL NUM = 0, PROXIMA *
+         CP    OPERAN1,=P'0'
+         BE    EJE_SIG 
+*; OBTENGO EL SIGNO *         
+         BH    DEC_COM
+		 MVC   SIGNO,=C'-'
+         MP    DIVIDEND,=P'-1'
+     	 ZAP   OPERAN1,DIVIDEND
+		 
+*; COMPARO NUM Y DEN		 
+DEC_COM	 CP    DIVIDEND,DIVISOR
+		 BL    S_ENTERA
+		 BH    C_ENTERA
+		 BE    C_ENTERA
+
+*; SIN PARTE ENTERA   *
+S_ENTERA B     P_DECIML
+
+*; CON PARTE ENTERA    *		 
+C_ENTERA DP    DIVIDEND,DIVISOR
+         LA    7,DIVIDEND   
+		 ZAP   AUXNUM1,0(3,7)
+		 ZAP   OPERAN1,3(3,7)
+		 ZAP   DIVIDEND,OPERAN1
+		 B     DEC_COM
+
+*; PARTE DECIMAL - MULTIPLICO EL NUM X 10 *           
+P_DECIML MP    OPERAN1,=P'10'
+         ZAP   DIVIDEND,OPERAN1
+		 
+*; VUELVO A COMPARAR *
+		 CP    DIVIDEND,DIVISOR
+		 BE    EJE_DIV
+		 BH    EJE_DIV		 
+		 
+		 MVC   0(1,11),=C'0'
+		 A     11,=F'1'
+		 B     EJE_AJST
+		 
+EJE_DIV	 DP    DIVIDEND,DIVISOR
+         LA    7,DIVIDEND   
+
+*; GUARDO EL RESTO *		 
+		 ZAP   OPERAN1,3(3,7)
+
+*; OBTENGO EL COCIENTE *		 
+		 UNPK  RESULT,0(3,7)
+		 MVZ   RESULT+6(1),=X'FF'
+		 MVC   0(1,11),RESULT+6
+		 A     11,=F'1'
+		 
+		 ZAP   DIVIDEND,OPERAN1
+EJE_AJST BCT   9,P_DECIML
+		 
+*; CONVIERTO A CARACTER LA PARTE ENTERA *		     
+		 UNPK  ENTEROS,AUXNUM1
+		 MVZ   ENTEROS+7(1),=X'FF'
+		 
+*; COPIO EL SIGNO *
+		 MVC   RE_SUMA(1),SIGNO
+		 MVC   RE_SUMA+1(4),ENTEROS+4
+		 MVC   RE_SUMA+5(1),=C','
+		 MVC   RE_SUMA+6(5),DCIMALES
+		 MVC   RE_SUMA+11(9),=C'          ' 
+		 
+		 WTO   MF=(E,RE_SUMA-4)
+
+*; PROCESO LA FRACCION SIGUIENTE *		 
+EJE_SIG	 A     6,=F'6'
+		 BCT   8,EJE_CALC
+		 
+		 B     MENU
+
+*******************************************
+*******   EXPRESION FRACCIONARIA    ******* 
+*******************************************
+EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
+		 WAIT  ECB=WAITECB 
+*EX_FRACC MVC   NUMRDOR,=C'0000' 
+		 
+		 PACK  AUXNUM1,NUMRDOR		 
+		 
+		 LA    7,DENMDOR
+		 
+		 WTOR  'Parte decimal periodica [4 DIGITOS]',DENMDOR,,WAITECB
+		 WAIT  ECB=WAITECB 
+*		 MVC   DENMDOR,=C'0003' 
+		 
+		 PACK  AUXNUM2,DENMDOR
+		 
+*; AJUSTO NUMERO INGRESADO PARA MOSTRAR *
+*; PARTE ENTERA *
+         MVC   RE_SUMA(19),=C'                     '		 
+		 MVC   RE_SUMA(1),=C' '
+		 MVC   RE_SUMA+1(4),NUMRDOR
+		 MVC   RE_SUMA+5(1),=C','
+
+*; PARTE DECIMAL *
+         LA    8,RE_SUMA
+         A     8,=F'6'
+		 LA    9,4
+		 
+*; NO COPIO LOS CEROS A LA IZQUIERDA *
+*; DE LA PARTE DECIMAL *		 
+EVAL_CR  CLC   0(1,7),=C'0'
+		 BE    NO_COPIO
+		 
+COPIAR_C MVC   0(1,8),0(7)
+		 A     8,=F'1'
+		 A     7,=F'1'
+		 BCT   9,COPIAR_C
+		 B     IMP_PERI
+		 
+NO_COPIO A     7,=F'1' 		 
+		 BCT   9,EVAL_CR
+
+IMP_PERI MVC   0(3,8),=C'...'
+		 WTO   MF=(E,RE_SUMA-4)
+         
+*; EXPRESAR COMO FRACCION *
+*; CUENTO LAS CIFRAS DECIMALES *
+         CP    AUXNUM2,=P'1000'
+		 BH    M_MIL  
+		 BE    M_MIL
+		 CP    AUXNUM2,=P'100'		 
+		 BH    M_CIEN
+		 BE	   M_CIEN
+		 CP    AUXNUM2,=P'10'
+		 BH    M_DIEZ
+		 BE    M_DIEZ
+		 CP    AUXNUM2,=P'1'
+		 BH    M_UNO
+		 BE    M_UNO
+
+M_MIL    ZAP   RES_NUM,=P'10000'
+         ZAP   AUXNUM3,=P'9999'  
+         B     EJE_MUL
+M_CIEN   ZAP   RES_NUM,=P'1000'
+         ZAP   AUXNUM3,=P'999'
+         B     EJE_MUL
+M_DIEZ   ZAP   RES_NUM,=P'100'
+         ZAP   AUXNUM3,=P'99'
+         B     EJE_MUL
+M_UNO    ZAP   RES_NUM,=P'10'
+         ZAP   AUXNUM3,=P'9'
+
+EJE_MUL  MP    RES_NUM,AUXNUM1
+		 AP    RES_NUM,AUXNUM2
+		 SP    RES_NUM,AUXNUM1
+		 
+*; MOSTRAR RESULTADO *
+*; PARTE ENTERA *
+         MVC   RE_SUMA(19),=C'                     '		 
+		 MVC   RE_SUMA(1),=C' '
+		 
+		 UNPK  RESULT,RES_NUM
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+1(7),RESULT
+		 MVC   RE_SUMA+8(1),=C'/'
+		 
+		 UNPK  RESULT,AUXNUM3
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+9(7),RESULT
+
+		 WTO   MF=(E,RE_SUMA-4)	 
+		 
+	     B     MENU		 
+		 
+********************************************
+*******   DECLARACION DE VARIABLES   *******
+********************************************
+OPCION   DS    CL1
+ORDEN    DS    CL1
+ORDENPCK DS    PL8
+
+SIGNO    DS    CL1  
+NUMRDOR  DS    CL4
+DENMDOR  DS    CL4
+
+         DC    H'26'
+		 DC    H'0'
+FRAC     DC    C'Fraccion X:           '
+
+MAT      DS    20PL3
+
+RES_NUM  DS    PL4
+RES_DEN  DS    PL4
+RES_AUX  DS    PL4
+
+DIVIDEND DS    PL6
+DIVISOR  DS    PL3
+
+         DC    H'11'
+		 DC    H'0'
+RESULT   DS    CL7
+
+         DC    H'23'
+		 DC    H'0'
+RE_SUMA  DS    CL19
+
+WAITECB  DC    F'0'
+
+AUXNUM1  DS    PL3
+AUXNUM2  DS    PL3
+AUXNUM3  DS    PL3
+AUXNUM4  DS    PL3
+
+A_INDICE DS    10P'0'
+A_AUX    DC    X'0C1C2C3C4C5C6C7C8C9C'
+EMP_L2   DC    P'00'
+EMP_INDI DC    P'000000000000000'
+AUX      DS    PL1
+AUX2     DS    PL1
+
+OPERAN1  DS    PL8
+OPERAN2  DS    PL8
+
+ORDN_ASC DS    PL1
+COMA_FLG DS    PL1
+
+DCIMALES DS    CL5
+ENTEROS  DS    CL8
+
+		 END
