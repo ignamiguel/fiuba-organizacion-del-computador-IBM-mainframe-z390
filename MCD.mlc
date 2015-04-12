@@ -449,18 +449,78 @@ EJE_MUL  MP    RES_NUM,AUXNUM1
 *******************************************
 *******   MAXIMO COMUN DIVISOR      ******* 
 *******************************************
-CAL_MCD  ZAP   AUXNUM1,=P'60' 
-         ZAP   AUXNUM2,=P'90'
+CAL_MCD  ZAP   AUXNUM1,=P'12'     
  
          BAL   5,FACTRIZR
+         MVC   FACTNUM2,FACTNUM1
+
+		 ZAP   AUXNUM1,=P'18'
+		 BAL   5,FACTRIZR
+
+         ZAP   RES_AUX,=P'1'
 		 
+*; COMPARO LOS FACTORES *
+         LA    7,FACTNUM1
+		 LA    8,FACTNUM2
+		 
+EVAL_FAC CP    0(3,7),0(3,8)
+		 BE    EVAL_POT
+		 BL    INCR_1
+		 BH    INCR_2
+
+INCR_1   CP    0(3,7),=P'-1'
+         BE    FN_EVL_F
+         A     7,=F'4'
+         B     EVAL_FAC
+
+INCR_2   CP    0(3,8),=P'-1'
+         BE    FN_EVL_F
+         A     8,=F'4'
+         B     EVAL_FAC
+
+*; COPIO EL FACTOR Y COMPARO LAS POTENCIAS *
+EVAL_POT ZAP   AUXNUM3,0(3,7)
+         CP    3(1,7),3(1,8)
+         BE    COPIAR_1  
+         BL    COPIAR_1
+         BH	   COPIAR_2 
+
+COPIAR_1 ZAP   OPERAN1,3(1,7)
+         B     MULT_FAC
+COPIAR_2 ZAP   OPERAN1,3(1,8)
+    
+MULT_FAC CVB   9,OPERAN1
+         
+EJE_M_F  MP    RES_AUX,AUXNUM3   
+         BCT   9,EJE_M_F
+         
+		 A     7,=F'4'
+*		 A     8,=F'4'
+		 
+		 B     EVAL_FAC
+
+FN_EVL_F MVC   RE_SUMA(19),=C'                     ' 
+		 
+		 UNPK  RESULT,RES_AUX
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+1(7),RESULT
+		 
+		 WTO   MF=(E,RE_SUMA-4)
+
+         B     MENU		 
+		 
+*;*********************************
+*;******   FACTORIZAR     *********
+*;*********************************		 
 *; FORMATO: 3 BYTE PARA EL FACTOR Y 1 PARA LA POTENCIA *
-*; APUNTO R8 A FACTNUM1 Y R7 A DIVIDEND *
 FACTRIZR LA    8,FACTNUM1
 		 LA    7,DIVIDEND
 
+*;		 MVC   FACTNUM(4),=X'00000D0C'
+		 
          CP    AUXNUM1,=P'1'
-         BE   CASO_1
+         BE    CASO_1
          
 *; PRIMERO PRIMO = 2 *
 		 ZAP   DIVISOR,=P'2'
