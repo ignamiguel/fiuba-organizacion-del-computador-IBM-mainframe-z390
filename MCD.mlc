@@ -449,12 +449,12 @@ EJE_MUL  MP    RES_NUM,AUXNUM1
 *******************************************
 *******   MAXIMO COMUN DIVISOR      ******* 
 *******************************************
-CAL_MCD  ZAP   AUXNUM1,=P'12'     
+CAL_MCD  ZAP   AUXNUM1,=P'2310'     
  
          BAL   5,FACTRIZR
          MVC   FACTNUM2,FACTNUM1
 
-		 ZAP   AUXNUM1,=P'18'
+		 ZAP   AUXNUM1,=P'5148'
 		 BAL   5,FACTRIZR
 
          ZAP   RES_AUX,=P'1'
@@ -514,10 +514,9 @@ FN_EVL_F MVC   RE_SUMA(19),=C'                     '
 *;******   FACTORIZAR     *********
 *;*********************************		 
 *; FORMATO: 3 BYTE PARA EL FACTOR Y 1 PARA LA POTENCIA *
+*; FACTNUM1 LONGITUD P20 * 
 FACTRIZR LA    8,FACTNUM1
 		 LA    7,DIVIDEND
-
-*;		 MVC   FACTNUM(4),=X'00000D0C'
 		 
          CP    AUXNUM1,=P'1'
          BE    CASO_1
@@ -552,6 +551,7 @@ PROXPRIM CP    AUX,=P'0'
 		 ZAP   AUX,=P'0'
 		 B     NEXT
 
+*; CALCULO EL PROXIMO PRIMO Y LO DEVUELVO EN DIVISOR *
 NEXT     BAL   9,CAL_PRIM
 		 B     CAL_FAC
 		 
@@ -570,12 +570,33 @@ FIN_FAC  ZAP   0(3,8),DIVISOR
 *;*********************************
 *;****** CALCULAR PRIMO   *********
 *;*********************************
-CAL_PRIM  CP   DIVISOR,=P'2'
-          BE   DVLVR_PR
+CAL_PRIM CP    DIVISOR,=P'2'
+         BE    DVLVR_3
+		  
+*; SI DIVISOR != 2, INCREMENTO DE A 2 *
+		 AP    DIVISOR,=P'2'		  
+		  
+		 LA    10,DIVIDEND 
+		 ZAP   DIVAUX,=P'2'		 
 
-DVLVR_PR  ZAP DIVISOR,=P'3'
-          BR   9
-		 
+*; CONTROLO QUE RESTO SIEMPRE != 0  *
+NACHO    ZAP   DIVIDEND,DIVISOR
+         DP    DIVIDEND,DIVAUX		  
+		 CP    3(3,10),=P'0'
+		 BE    SIG_PRIM
+		  
+		 AP    DIVAUX,=P'1'
+		 CP    DIVAUX,DIVISOR
+		 BE    DVLVR_PR
+		 B     NACHO
+
+SIG_PRIM AP    DIVISOR,=P'2'
+         ZAP   DIVAUX,=P'2'		 
+         B     NACHO		  
+
+DVLVR_3  ZAP   DIVISOR,=P'3'
+DVLVR_PR BR    9
+		  
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
@@ -599,6 +620,7 @@ RES_AUX  DS    PL4
 
 DIVIDEND DS    PL6
 DIVISOR  DS    PL3
+DIVAUX   DS    PL3
 
          DC    H'11'
 		 DC    H'0'
@@ -632,7 +654,7 @@ DCIMALES DS    CL5
 ENTEROS  DS    CL8
 
 
-FACTNUM1 DS    PL20
-FACTNUM2 DS    PL20
+FACTNUM1 DS    PL25
+FACTNUM2 DS    PL25
 
 		 END
