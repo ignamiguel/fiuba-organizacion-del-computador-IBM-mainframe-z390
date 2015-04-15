@@ -9,12 +9,10 @@ MENU	 BAL   5,IMPRME_M
 		 BE    INGRESAR
 		 CLC   OPCION,=C'2'
 		 BE    MOSTRAR
-		 CLC   OPCION,=C'6'
-		 BE    EX_DECIM
-		 CLC   OPCION,=C'7'
-		 BE    EX_FRACC
-		 CLC   OPCION,=C'8'
-		 BE    CAL_MCD
+		 CLC   OPCION,=C'3'
+		 BE    SUMAR
+*;		 CLC   OPCION,=C'8'
+*;		 BE    CAL_MCD
 		 CLC   OPCION,=C'9'
 		 BE    FIN
 		 
@@ -33,7 +31,7 @@ INITMAT  MVC   0(3,6),=X'00000F'
 *; CARGO VALORES DE PRUEBA  **
 *;****************************
          LA    6,MAT
-         MVC   0(3,6),=X'00011F'
+         MVC   0(3,6),=X'00010F'
          MVC   3(3,6),=X'00002F'
          MVC   6(3,6),=X'00001F'
          MVC   9(3,6),=X'00003F'
@@ -183,53 +181,29 @@ ITER_SUM	 ZAP   RES_AUX,RES_DEN
 *; SUMO RES_NUM + RES_AUX		 
 		 AP    RES_NUM,RES_AUX
          
+*; CALCULO EL MAXIMO COMUN DIVISOR *
+         ZAP   AUXNUM1,RES_NUM
+		 ZAP   AUXNUM2,RES_DEN
+		 
+		 BAL   14,CAL_MCD
+*; SIMPLIFICO SI MCD != 1*		 
+		 ZAP   DIVISOR,RES_AUX
+         CP    DIVISOR,=P'1'
+		 BE    INCR_MAT
+		 
+		 LA   11,DIVIDEND
+		 ZAP  DIVIDEND,RES_NUM
+         DP   DIVIDEND,DIVISOR
+         ZAP  RES_NUM,0(3,11)
+
+		 ZAP  DIVIDEND,RES_DEN
+         DP   DIVIDEND,DIVISOR
+         ZAP  RES_DEN,0(3,11)
+		 
 *; INCREMENTO EL REGISTRO APUNTANDO A MATRIX 
 INCR_MAT A     6,=F'6' 		 
 		 BCT   7,ITER_SUM
-       
-*;----------------------------------------
-*; TODO: REDUCIR FRACCION IRREDUCTIBLE
-*		 MP    RES_DEN,9(3,6)
-*		 UNPK  RESULT,RES_DEN
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
-
-* DIVIDO POR EL DEN DE LA 1RA FRACCION  
-*         ZAP   DIVIDEND,RES_DEN
-*		 ZAP   DIVISOR,3(3,6)
-		 
-*		 DP    DIVIDEND,DIVISOR
-*		 LA    7,DIVIDEND   
-*		 UNPK  RESULT,0(3,7)
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
-		 
-*		 ZAP   RES_AUX,0(3,7)
-*		 MP    RES_AUX,0(3,6)
-*		 ZAP   RES_NUM,RES_AUX
-		 
-*		 UNPK  RESULT,RES_NUM
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
-		 
-* DIVIDO POR EL DEN DE LA 2RA FRACCION  
-*         ZAP   DIVIDEND,RES_DEN
-*		  ZAP   DIVISOR,9(3,6)
-		 
-*		 DP    DIVIDEND,DIVISOR
-*		 LA    7,DIVIDEND   
-*		 UNPK  RESULT,0(3,7)
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
-		 
-*		 ZAP   RES_AUX,0(3,7)
-*		 MP    RES_AUX,6(3,6)
-*		 AP    RES_NUM,RES_AUX
-		 
-*		 UNPK  RESULT,RES_NUM
-*		 MVZ   RESULT+11(1),=X'FF'
-*		 WTO   MF=(E,RESULT-4)
-		 
+    		 
 *;***************************
 *;   MUESTRO EL RESULTADO  **
 *;***************************
@@ -256,221 +230,36 @@ TOT_POS	 MVC   RE_SUMA+3(1),SIGNO
 		 
 		 WTO   MF=(E,RE_SUMA-4)
 		 
-		 B     MENU
-		 
+		 B     MENU	 
 
-**************************************
-*******   EXPRESION DECIMAL    ******* 
-**************************************
-EX_DECIM LA    6,MAT
-         
-		 LA    8,10
-		 
-EJE_CALC LA    10,RE_SUMA
-		 LA    11,DCIMALES
-		 LA    9,5
-		 
-*; COPIO NUM A DIVIDENDO Y DEN A DIVISOR
-		 ZAP   OPERAN1,0(3,6)
-		 ZAP   DIVIDEND,0(3,6)
-		 ZAP   DIVISOR,3(3,6)
-         ZAP   AUXNUM1,=P'0'		 
-
-         MVC   SIGNO,=C' '
-*; SI EL NUM = 0, PROXIMA *
-         CP    OPERAN1,=P'0'
-         BE    EJE_SIG 
-*; OBTENGO EL SIGNO *         
-         BH    DEC_COM
-		 MVC   SIGNO,=C'-'
-         MP    DIVIDEND,=P'-1'
-     	 ZAP   OPERAN1,DIVIDEND
-		 
-*; COMPARO NUM Y DEN		 
-DEC_COM	 CP    DIVIDEND,DIVISOR
-		 BL    S_ENTERA
-		 BH    C_ENTERA
-		 BE    C_ENTERA
-
-*; SIN PARTE ENTERA   *
-S_ENTERA B     P_DECIML
-
-*; CON PARTE ENTERA    *		 
-C_ENTERA DP    DIVIDEND,DIVISOR
-         LA    7,DIVIDEND   
-		 ZAP   AUXNUM1,0(3,7)
-		 ZAP   OPERAN1,3(3,7)
-		 ZAP   DIVIDEND,OPERAN1
-		 B     DEC_COM
-
-*; PARTE DECIMAL - MULTIPLICO EL NUM X 10 *           
-P_DECIML MP    OPERAN1,=P'10'
-         ZAP   DIVIDEND,OPERAN1
-		 
-*; VUELVO A COMPARAR *
-		 CP    DIVIDEND,DIVISOR
-		 BE    EJE_DIV
-		 BH    EJE_DIV		 
-		 
-		 MVC   0(1,11),=C'0'
-		 A     11,=F'1'
-		 B     EJE_AJST
-		 
-EJE_DIV	 DP    DIVIDEND,DIVISOR
-         LA    7,DIVIDEND   
-
-*; GUARDO EL RESTO *		 
-		 ZAP   OPERAN1,3(3,7)
-
-*; OBTENGO EL COCIENTE *		 
-		 UNPK  RESULT,0(3,7)
-		 MVZ   RESULT+6(1),=X'FF'
-		 MVC   0(1,11),RESULT+6
-		 A     11,=F'1'
-		 
-		 ZAP   DIVIDEND,OPERAN1
-EJE_AJST BCT   9,P_DECIML
-		 
-*; CONVIERTO A CARACTER LA PARTE ENTERA *		     
-		 UNPK  ENTEROS,AUXNUM1
-		 MVZ   ENTEROS+7(1),=X'FF'
-		 
-*; COPIO EL SIGNO *
-		 MVC   RE_SUMA(1),SIGNO
-		 MVC   RE_SUMA+1(4),ENTEROS+4
-		 MVC   RE_SUMA+5(1),=C','
-		 MVC   RE_SUMA+6(5),DCIMALES
-		 MVC   RE_SUMA+11(9),=C'          ' 
-		 
-		 WTO   MF=(E,RE_SUMA-4)
-
-*; PROCESO LA FRACCION SIGUIENTE *		 
-EJE_SIG	 A     6,=F'6'
-		 BCT   8,EJE_CALC
-		 
-		 B     MENU
-
-*******************************************
-*******   EXPRESION FRACCIONARIA    ******* 
-*******************************************
-EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
-		 WAIT  ECB=WAITECB 
-*EX_FRACC MVC   NUMRDOR,=C'0000' 
-		 
-		 PACK  AUXNUM1,NUMRDOR		 
-		 
-		 LA    7,DENMDOR
-		 
-		 WTOR  'Parte decimal periodica [4 DIGITOS]',DENMDOR,,WAITECB
-		 WAIT  ECB=WAITECB 
-*		 MVC   DENMDOR,=C'0003' 
-		 
-		 PACK  AUXNUM2,DENMDOR
-		 
-*; AJUSTO NUMERO INGRESADO PARA MOSTRAR *
-*; PARTE ENTERA *
-         MVC   RE_SUMA(19),=C'                     '		 
-		 MVC   RE_SUMA(1),=C' '
-		 MVC   RE_SUMA+1(4),NUMRDOR
-		 MVC   RE_SUMA+5(1),=C','
-
-*; PARTE DECIMAL *
-         LA    8,RE_SUMA
-         A     8,=F'6'
-		 LA    9,4
-		 
-*; NO COPIO LOS CEROS A LA IZQUIERDA *
-*; DE LA PARTE DECIMAL *		 
-EVAL_CR  CLC   0(1,7),=C'0'
-		 BE    NO_COPIO
-		 
-COPIAR_C MVC   0(1,8),0(7)
-		 A     8,=F'1'
-		 A     7,=F'1'
-		 BCT   9,COPIAR_C
-		 B     IMP_PERI
-		 
-NO_COPIO A     7,=F'1' 		 
-		 BCT   9,EVAL_CR
-
-IMP_PERI MVC   0(3,8),=C'...'
-		 WTO   MF=(E,RE_SUMA-4)
-         
-*; EXPRESAR COMO FRACCION *
-*; CUENTO LAS CIFRAS DECIMALES *
-         CP    AUXNUM2,=P'1000'
-		 BH    M_MIL  
-		 BE    M_MIL
-		 CP    AUXNUM2,=P'100'		 
-		 BH    M_CIEN
-		 BE	   M_CIEN
-		 CP    AUXNUM2,=P'10'
-		 BH    M_DIEZ
-		 BE    M_DIEZ
-		 CP    AUXNUM2,=P'1'
-		 BH    M_UNO
-		 BE    M_UNO
-
-M_MIL    ZAP   RES_NUM,=P'10000'
-         ZAP   AUXNUM3,=P'9999'  
-         B     EJE_MUL
-M_CIEN   ZAP   RES_NUM,=P'1000'
-         ZAP   AUXNUM3,=P'999'
-         B     EJE_MUL
-M_DIEZ   ZAP   RES_NUM,=P'100'
-         ZAP   AUXNUM3,=P'99'
-         B     EJE_MUL
-M_UNO    ZAP   RES_NUM,=P'10'
-         ZAP   AUXNUM3,=P'9'
-
-EJE_MUL  MP    RES_NUM,AUXNUM1
-		 AP    RES_NUM,AUXNUM2
-		 SP    RES_NUM,AUXNUM1
-		 
-*; MOSTRAR RESULTADO *
-*; PARTE ENTERA *
-         MVC   RE_SUMA(19),=C'                     '		 
-		 MVC   RE_SUMA(1),=C' '
-		 
-		 UNPK  RESULT,RES_NUM
-         MVZ   RESULT+6(1),=X'FF'		 
-         
-		 MVC   RE_SUMA+1(7),RESULT
-		 MVC   RE_SUMA+8(1),=C'/'
-		 
-		 UNPK  RESULT,AUXNUM3
-         MVZ   RESULT+6(1),=X'FF'		 
-         
-		 MVC   RE_SUMA+9(7),RESULT
-
-		 WTO   MF=(E,RE_SUMA-4)	 
-		 
-	     B     MENU		 
 *******************************************
 *******   MAXIMO COMUN DIVISOR      ******* 
 *******************************************
-CAL_MCD  ZAP   AUXNUM1,=P'2310'     
- 
+*; MCD(A,B) UTILIZA COMO PARAMETRO LAS VARIABLES *
+*; AUXNUM1 Y AUXNUM2 *
+CAL_MCD  MVC   FACTNUM1(7),=X'00001C1C00001D'
+         MVC   FACTNUM2(7),=X'00001C1C00001D'
          BAL   5,FACTRIZR
          MVC   FACTNUM2,FACTNUM1
 
-		 ZAP   AUXNUM1,=P'5148'
+		 ZAP   AUXNUM1,AUXNUM2
 		 BAL   5,FACTRIZR
 
+*; INICIALIZO RES_AUX (MCD) EN 1 *
          ZAP   RES_AUX,=P'1'
 		 
 *; COMPARO LOS FACTORES *
-         LA    7,FACTNUM1
+         LA    9,FACTNUM1
 		 LA    8,FACTNUM2
 		 
-EVAL_FAC CP    0(3,7),0(3,8)
+EVAL_FAC CP    0(3,9),0(3,8)
 		 BE    EVAL_POT
 		 BL    INCR_1
 		 BH    INCR_2
 
-INCR_1   CP    0(3,7),=P'-1'
+INCR_1   CP    0(3,9),=P'-1'
          BE    FN_EVL_F
-         A     7,=F'4'
+         A     9,=F'4'
          B     EVAL_FAC
 
 INCR_2   CP    0(3,8),=P'-1'
@@ -479,28 +268,29 @@ INCR_2   CP    0(3,8),=P'-1'
          B     EVAL_FAC
 
 *; COPIO EL FACTOR Y COMPARO LAS POTENCIAS *
-EVAL_POT ZAP   AUXNUM3,0(3,7)
-         CP    3(1,7),3(1,8)
+EVAL_POT ZAP   AUXNUM3,0(3,9)
+         CP    3(1,9),3(1,8)
          BE    COPIAR_1  
          BL    COPIAR_1
          BH	   COPIAR_2 
 
-COPIAR_1 ZAP   OPERAN1,3(1,7)
+COPIAR_1 ZAP   OPERAN1,3(1,9)
          B     MULT_FAC
 COPIAR_2 ZAP   OPERAN1,3(1,8)
     
-MULT_FAC CVB   9,OPERAN1
+MULT_FAC CVB   10,OPERAN1
          
 EJE_M_F  MP    RES_AUX,AUXNUM3   
-         BCT   9,EJE_M_F
+         BCT   10,EJE_M_F
          
-		 A     7,=F'4'
+		 A     9,=F'4'
 *		 A     8,=F'4'
 		 
 		 B     EVAL_FAC
 
 FN_EVL_F MVC   RE_SUMA(19),=C'                     ' 
 		 
+*; IMPRIMO EL MCD ALOJADO EN RES_AUX *
 		 UNPK  RESULT,RES_AUX
          MVZ   RESULT+6(1),=X'FF'		 
          
@@ -508,7 +298,7 @@ FN_EVL_F MVC   RE_SUMA(19),=C'                     '
 		 
 		 WTO   MF=(E,RE_SUMA-4)
 
-         B     MENU		 
+         BR    14		 
 		 
 *;*********************************
 *;******   FACTORIZAR     *********
@@ -516,7 +306,7 @@ FN_EVL_F MVC   RE_SUMA(19),=C'                     '
 *; FORMATO: 3 BYTE PARA EL FACTOR Y 1 PARA LA POTENCIA *
 *; FACTNUM1 LONGITUD P20 * 
 FACTRIZR LA    8,FACTNUM1
-		 LA    7,DIVIDEND
+		 LA    9,DIVIDEND
 		 
          CP    AUXNUM1,=P'1'
          BE    CASO_1
@@ -532,11 +322,11 @@ CAL_FAC	 CP    AUXNUM1,=P'1'
          DP    DIVIDEND,DIVISOR
 		 
 *; EVALUO SI RESTO = 0 *
-         CP    3(3,7),=P'0'
+         CP    3(3,9),=P'0'
 		 BE    SEGUIR_D
 		 BNE   PROXPRIM
 
-SEGUIR_D ZAP   AUXNUM1,0(3,7)
+SEGUIR_D ZAP   AUXNUM1,0(3,9)
          AP    AUX,=P'1'
          B     CAL_FAC	 
 
@@ -552,7 +342,7 @@ PROXPRIM CP    AUX,=P'0'
 		 B     NEXT
 
 *; CALCULO EL PROXIMO PRIMO Y LO DEVUELVO EN DIVISOR *
-NEXT     BAL   9,CAL_PRIM
+NEXT     BAL   10,CAL_PRIM
 		 B     CAL_FAC
 		 
 CASO_1   ZAP   DIVISOR,=P'1'
@@ -563,9 +353,7 @@ FIN_FAC  ZAP   0(3,8),DIVISOR
 		 ZAP   3(1,8),AUX
          A     8,=F'4'
 		 ZAP   0(3,8),=P'-1'
-         BR    5
-		 
- 		 B     MENU		 
+         BR    5 
 
 *;*********************************
 *;****** CALCULAR PRIMO   *********
@@ -576,13 +364,13 @@ CAL_PRIM CP    DIVISOR,=P'2'
 *; SI DIVISOR != 2, INCREMENTO DE A 2 *
 		 AP    DIVISOR,=P'2'		  
 		  
-		 LA    10,DIVIDEND 
+		 LA    11,DIVIDEND 
 		 ZAP   DIVAUX,=P'2'		 
 
 *; CONTROLO QUE RESTO SIEMPRE != 0  *
 NACHO    ZAP   DIVIDEND,DIVISOR
          DP    DIVIDEND,DIVAUX		  
-		 CP    3(3,10),=P'0'
+		 CP    3(3,11),=P'0'
 		 BE    SIG_PRIM
 		  
 		 AP    DIVAUX,=P'1'
@@ -595,7 +383,7 @@ SIG_PRIM AP    DIVISOR,=P'2'
          B     NACHO		  
 
 DVLVR_3  ZAP   DIVISOR,=P'3'
-DVLVR_PR BR    9
+DVLVR_PR BR    10
 		  
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
@@ -614,9 +402,9 @@ FRAC     DC    C'Fraccion X:           '
 
 MAT      DS    20PL3
 
-RES_NUM  DS    PL4
-RES_DEN  DS    PL4
-RES_AUX  DS    PL4
+RES_NUM  DS    PL5
+RES_DEN  DS    PL5
+RES_AUX  DS    PL5
 
 DIVIDEND DS    PL6
 DIVISOR  DS    PL3
