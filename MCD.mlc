@@ -40,7 +40,7 @@ INITMAT  MVC   0(3,6),=X'00000F'
          MVC   18(3,6),=X'09993F'
          MVC   21(3,6),=X'09992F'
 *;		 MVC   24(3,6),=X'00005F'
-*;         MVC   27(3,6),=X'00003F'
+*;       MVC   27(3,6),=X'00003F'
          BR    5
 
 ************************************
@@ -224,7 +224,7 @@ ITER_SUM ZAP   RES_AUX,RES_DEN
 *; PROCESO DE SIMPLIFICACION *
 *;****************************         
 *; CALCULO EL MAXIMO COMUN DIVISOR *
-         ZAP   AUXNUM5,RES_NUM
+         ZAP   AUXNUM5	,RES_NUM
 		 ZAP   AUXNUM6,RES_DEN
 		 
 		 BAL   14,CAL_MCD
