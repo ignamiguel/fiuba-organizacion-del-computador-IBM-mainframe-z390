@@ -17,6 +17,8 @@ MENU	 BAL   5,IMPRME_M
 		 BE    ORDENDES
 		 CLC   OPCION,=C'6'
 		 BE    EX_DECIM
+		 CLC   OPCION,=C'7'
+		 BE    EX_FRACC
 		 CLC   OPCION,=C'8'
 		 BE    ELIMINAR
 		 CLC   OPCION,=C'9'
@@ -39,13 +41,35 @@ INITMAT  MVC   0(3,6),=X'00000F'
          LA    6,MAT
          MVC   0(3,6),=X'09999F'
          MVC   3(3,6),=X'09998F'
+		 
          MVC   6(3,6),=X'09997F'
          MVC   9(3,6),=X'09996F'
+		 
 		 MVC   12(3,6),=X'09995F'
          MVC   15(3,6),=X'09994F'
+		 
          MVC   18(3,6),=X'09993F'
          MVC   21(3,6),=X'09992F'
-         BR    5
+		 
+		 MVC   24(3,6),=X'00009D'
+         MVC   27(3,6),=X'00008F'
+		 
+         MVC   30(3,6),=X'00007D'
+         MVC   33(3,6),=X'00006F'
+		 
+		 MVC   36(3,6),=X'00005D'
+         MVC   39(3,6),=X'00004F'
+		 
+         MVC   42(3,6),=X'00093D'
+         MVC   45(3,6),=X'00002F'
+		 
+		 MVC   48(3,6),=X'00099D'
+         MVC   51(3,6),=X'00008F'
+		 
+         MVC   54(3,6),=X'00097D'
+         MVC   57(3,6),=X'00006F'
+         
+		 BR    5
 
 ************************************
 *******         MENU         *******
@@ -97,7 +121,6 @@ NEGATIVA LA    7,1
 NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
          WAIT  ECB=WAITECB
 
-*; TODO: VALIDAR QUE NO SEA 0000 *
 		 LA     10,NUMRDOR
          BAL    5,VAL_ING
 		 CLC    NUMRDOR,=X'F0F0F0F0'
@@ -356,12 +379,12 @@ DEVOLVER ZAP   OPERAN2,DVISOR2
          MVC   RE_SUMA(35),=C'                                        ' 
 		 
 *; IMPRIMO EL MCD ALOJADO EN OPERAN2 
-		 UNPK  RESU2,OPERAN2
-         MVZ   RESU2+15(1),=X'FF'		 
+*;		 UNPK  RESU2,OPERAN2
+*;       MVZ   RESU2+15(1),=X'FF'		 
          
-		 MVC   RE_SUMA+1(16),RESU2
+*;		 MVC   RE_SUMA+1(16),RESU2
 		 
-*		 WTO   MF=(E,RE_SUMA-4)
+*;		 WTO   MF=(E,RE_SUMA-4)
 
          BR    14
 **************************************
@@ -572,6 +595,126 @@ EJE_SIG	 A     6,=F'6'
 		 BCT   8,EJE_CALC
 		 
 		 B     MENU
+		 
+*******************************************
+*******   EXPRESION FRACCIONARIA    ******* 
+*******************************************
+EX_FRACC WTOR  'Ingresar parte entera [4 DIGITOS]',NUMRDOR,,WAITECB
+		 WAIT  ECB=WAITECB  
+		 
+		 PACK  AUXNUM1,NUMRDOR		 
+		 
+		 LA    7,DENMDOR
+		 
+		 WTOR  'Parte decimal periodica [4 DIGITOS]',DENMDOR,,WAITECB
+		 WAIT  ECB=WAITECB  
+		 
+		 PACK  AUXNUM2,DENMDOR
+		 
+*; AJUSTO NUMERO INGRESADO PARA MOSTRAR *
+*; PARTE ENTERA *
+         MVC   RE_SUMA(35),=C'Numero ingresado:                      '
+*		 MVC   RE_SUMA+18(1),=C' '
+		 MVC   RE_SUMA+18(4),NUMRDOR
+		 MVC   RE_SUMA+22(1),=C','
+
+*; PARTE DECIMAL *
+         LA    8,RE_SUMA
+         A     8,=F'23'
+		 LA    9,4
+		 
+*; NO COPIO LOS CEROS A LA IZQUIERDA *
+*; DE LA PARTE DECIMAL *		 
+EVAL_CR  CLC   0(1,7),=C'0'
+		 BE    NO_COPIO
+		 
+*; SI EL CARACTER NO ES CERO, COPIO DESDE AHI
+COPIAR_C MVC   0(1,8),0(7)
+		 A     8,=F'1'
+		 A     7,=F'1'
+		 BCT   9,COPIAR_C		 
+		 B     IMP_PERI
+		 
+NO_COPIO A     7,=F'1' 		 
+		 BCT   9,EVAL_CR
+
+*; IMPRIMO NUMERO INGRESADO 
+IMP_PERI MVC   0(3,8),=C'...'
+		 WTO   MF=(E,RE_SUMA-4)
+         
+*; EXPRESAR COMO FRACCION *
+*; CUENTO LAS CIFRAS DECIMALES *
+         CP    AUXNUM2,=P'1000'
+		 BH    M_MIL  
+		 BE    M_MIL
+		 CP    AUXNUM2,=P'100'		 
+		 BH    M_CIEN
+		 BE	   M_CIEN
+		 CP    AUXNUM2,=P'10'
+		 BH    M_DIEZ
+		 BE    M_DIEZ
+		 CP    AUXNUM2,=P'1'
+		 BH    M_UNO
+		 BE    M_UNO
+
+M_MIL    ZAP   RES_NUM,=P'10000'
+         ZAP   RES_DEN,=P'9999'  
+         B     EJE_MUL
+M_CIEN   ZAP   RES_NUM,=P'1000'
+         ZAP   RES_DEN,=P'999'
+         B     EJE_MUL
+M_DIEZ   ZAP   RES_NUM,=P'100'
+         ZAP   RES_DEN,=P'99'
+         B     EJE_MUL
+M_UNO    ZAP   RES_NUM,=P'10'
+         ZAP   RES_DEN,=P'9'
+
+EJE_MUL  MP    RES_NUM,AUXNUM1
+		 AP    RES_NUM,AUXNUM2
+		 SP    RES_NUM,AUXNUM1
+
+*;****************************
+*; PROCESO DE SIMPLIFICACION *
+*;****************************         
+*; CALCULO EL MAXIMO COMUN DIVISOR *
+         ZAP   AUXNUM5,RES_NUM
+		 ZAP   AUXNUM6,RES_DEN
+		 
+		 BAL   14,CAL_MCD
+		 
+*; SIMPLIFICO SI MCD != 1*		 
+		 ZAP   DVISOR2,OPERAN2
+         CP    DVISOR2,=P'1'
+		 BE    IMP_FRAC
+		 
+		 LA   8,DVDEN2
+		 ZAP  DVDEN2,RES_NUM
+         DP   DVDEN2,DVISOR2
+         ZAP  RES_NUM,0(8,8)
+
+		 ZAP  DVDEN2,RES_DEN
+         DP   DVDEN2,DVISOR2
+         ZAP  RES_DEN,0(8,8)
+
+*; MOSTRAR RESULTADO *
+*; PARTE ENTERA *
+IMP_FRAC MVC   RE_SUMA(35),=C'                                        '
+		 MVC   RE_SUMA(1),=C' '
+		 
+		 UNPK  RESULT,RES_NUM
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+1(7),RESULT
+		 MVC   RE_SUMA+8(1),=C'/'
+		 
+		 UNPK  RESULT,RES_DEN
+         MVZ   RESULT+6(1),=X'FF'		 
+         
+		 MVC   RE_SUMA+9(7),RESULT
+
+		 WTO   MF=(E,RE_SUMA-4)	 
+		 
+	     B     MENU	
 		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
