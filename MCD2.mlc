@@ -124,7 +124,7 @@ NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
 		 LA     10,NUMRDOR
          BAL    5,VAL_ING
 		 CLC    NUMRDOR,=X'F0F0F0F0'
-		 BE     NACHO2
+		 BE     INV_NUM
 
 		 WTOR  'Ingresar el denominador (4 DIGITOS)',DENMDOR,,WAITECB
 		 WAIT  ECB=WAITECB
@@ -132,7 +132,7 @@ NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
 		 LA     10,DENMDOR
          BAL    5,VAL_ING
 		 CLC    DENMDOR,=X'F0F0F0F0'
-		 BE     NACHO2		 
+		 BE     INV_NUM		 
 		 
 *; EMPAQUETO *
 		 PACK  AUXNUM1,NUMRDOR
@@ -146,37 +146,39 @@ NUM_F	 WTOR  'Ingresar el numerador (4 DIGITOS)',NUMRDOR,,WAITECB
 POSITIVA MVC   0(3,6),AUXNUM1	 
          MVC   3(3,6),AUXNUM2
          B     MENU
-
-*;****************************
-*; MENSAJE DE ERROR AUXILIAR *
-*;****************************
-VAL_ING  LA    11,4
-VAL_ING2 CLC   0(1,10),=X'F0'
-         BL    NACHO
-		 CLC   0(1,10),=X'F9'
-		 BH    NACHO
-		 A     10,=F'1'
-		 BCT   11,VAL_ING2
-		 BR    5
-
-NACHO    WTO   'Caracter invalido!'
-         B     NUM_F
-		 
-NACHO2	 WTO   'No puden ser todos ceros!'
-         B     NUM_F	 
 		 
 *;****************************
 *; MENSAJE DE ERROR AUXILIAR *
 *;****************************
 INVORDEN WTO   'Posicion invalida!'
          B     INGRESAR
+
+VAL_ING  LA    11,4
+VAL_ING2 CLC   0(1,10),=X'F0'
+         BL    INV_CAR
+		 CLC   0(1,10),=X'F9'
+		 BH    INV_CAR
+		 A     10,=F'1'
+		 BCT   11,VAL_ING2
+		 BR    5
+
+INV_CAR  WTO   'Caracter invalido!'
+         B     NUM_F
+		 
+INV_NUM	 WTO   'No puden ser todos ceros!'
+         B     NUM_F
 		 
 ****************************
 *******   ELIMINAR   ******* 
 ****************************		 
 ELIMINAR LA    6,MAT
-         WTOR  'Seleccionar posicion arreglo [0-9]',ORDEN,,WAITECB
-		 WAIT  ECB=WAITECB 
+ELI_POS  WTOR  'Seleccionar posicion arreglo [0-9]',ORDEN,,WAITECB
+		 WAIT  ECB=WAITECB
+		 CLC   ORDEN,=C'0'
+		 BL    ELI_ERR
+		 CLC   ORDEN,=C'9'
+		 BH    ELI_ERR		 
+		 
 		 PACK  ORDENPCK,ORDEN
 		 CVB   9,ORDENPCK
 		 LA    8,0
@@ -188,7 +190,12 @@ ELIMINAR LA    6,MAT
 		 ZAP   3(3,6),=P'0'
 		 
 		 B     MENU		 
-		 
+*;*********************
+*; MENSAJE DE ERROR   *
+*;*********************
+ELI_ERR  WTO   'Posicion invalida!'
+         B     ELI_POS
+
 ***************************
 *******   MOSTRAR   ******* 
 ***************************
@@ -507,14 +514,15 @@ N_MOST2  A     8,=F'1'
 *******   EXPRESION DECIMAL    ******* 
 **************************************
 EX_DECIM LA    6,MAT
-         
+         ZAP   ORDENPCK,=P'0'
+		 
 		 LA    8,10
 		 
 EJE_CALC LA    10,RE_SUMA
 		 LA    11,DCIMALES
 		 LA    9,5
 *; INICIALIZO RE_SUMA     *
-		 MVC   RE_SUMA(35),=C'                                        '
+		 MVC   RE_SUMA(35),=C'Fraccion X:                             '
 		 
 *; COPIO NUM A DIVIDENDO Y DEN A DIVISOR
 		 ZAP   OPERAN1,0(3,6)
@@ -576,22 +584,27 @@ EJE_DIV	 DP    DIVIDEND,DIVISOR
 		 
 		 ZAP   DIVIDEND,OPERAN1
 EJE_AJST BCT   9,P_DECIML
-		 
+
+*; IMPRIMO POR PANTALLA 		 
 *; CONVIERTO A CARACTER LA PARTE ENTERA *		     
+		 UNPK  ORDEN,ORDENPCK
+         MVZ   ORDEN(1),=X'FF' 
 		 UNPK  ENTEROS,AUXNUM1
 		 MVZ   ENTEROS+7(1),=X'FF'
 		 
 *; COPIO EL SIGNO *
-		 MVC   RE_SUMA(1),SIGNO
-		 MVC   RE_SUMA+1(4),ENTEROS+4
-		 MVC   RE_SUMA+5(1),=C','
-		 MVC   RE_SUMA+6(5),DCIMALES
-		 MVC   RE_SUMA+11(9),=C'          ' 
+         MVC   RE_SUMA+9(1),ORDEN
+		 MVC   RE_SUMA+12(1),SIGNO
+		 MVC   RE_SUMA+13(4),ENTEROS+4
+		 MVC   RE_SUMA+17(1),=C','
+		 MVC   RE_SUMA+18(5),DCIMALES
+*;		 MVC   RE_SUMA+11(9),=C'          ' 
 		 
 		 WTO   MF=(E,RE_SUMA-4)
 
 *; PROCESO LA FRACCION SIGUIENTE *		 
 EJE_SIG	 A     6,=F'6'
+         AP    ORDENPCK,=P'1'
 		 BCT   8,EJE_CALC
 		 
 		 B     MENU
