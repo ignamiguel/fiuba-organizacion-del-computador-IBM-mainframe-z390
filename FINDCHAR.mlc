@@ -1,0 +1,123 @@
+FC       SUBENTRY BASES=(3,4)         
+         WTO   '=========>    INICIO    <========='         
+         
+		 BAL   5,INICIAR
+MENU	 BAL   5,IMPRME_M
+         WTOR  'Seleccionar opcion [1-9]',OPCION,,WAITECB
+		 WAIT  ECB=WAITECB 
+         CLC   OPCION,=C'1'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'2'
+		 BE    INGRESAR
+		 CLC   OPCION,=C'3'
+		 BE    BUSCAR
+		 CLC   OPCION,=C'9'
+		 BE    FIN
+		 
+FIN      WTO   '=========>    FIN    <========='  
+         SUBEXIT
+
+*************************************
+*******   INICIAR VARIABLES   *******
+*************************************
+INICIAR  LA    6,PALABRA
+         ST    6,STRING
+		 
+		 MVC   CHAR,=C'A'
+		 BR    5
+
+
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
+         WTO   '---------      MENU     ---------'
+         WTO   '---------------------------------'
+         WTO   '[1] Ver string y caracter'
+         WTO   '[2] Ingresar caracter'
+         WTO   '[3] Buscar caracter en string'
+		 
+         WTO   '[9] Salir'		 
+		 BR    5
+		 
+*************************************
+*******   MOSTRAR STRING      *******
+*************************************
+MOSTRAR  LA    6,PALABRA
+         WTO   MF=(E,PALABRA-4)
+		 MVC   MSG(20),=C'Caracter ingresado: '
+		 MVC   MSG+20(1),CHAR
+         WTO   MF=(E,MSG-4) 
+		 B     MENU
+
+************************************
+*******   INGRESAR CARACTER  ******* 
+************************************
+INGRESAR LA    6,PALABRA
+         WTOR  'Ingresar caracter',CHAR,,WAITECB
+		 WAIT  ECB=WAITECB 	 
+		 
+		 MVC   MSG(20),=C'Caracter ingresado: '
+		 MVC   MSG+20(1),CHAR
+         WTO   MF=(E,MSG-4)	 
+         B     MENU
+
+*************************************
+*******    BUSCAR STRING      ******* 
+*************************************
+BUSCAR   L     6,STRING
+*;       MVC   PALABRA,0(6)
+*;		 WTO   MF=(E,PALABRA-4)	
+
+*;       CARGO EL R7 CON LA ADDRESS DE VECSAL
+		 LA    7,VECSAL
+		 
+
+*;       VERIFICO SI ESTOY AL FINAL DEL STRING
+*;       COMPARO CONTENIDO DE ADDRESS R6 Y CHAR 		 
+OPERAR   CLC   0(1,6),=X'00'
+         BE    TERMINAR
+		 
+*;       VERIFICO SI EL CARACTER APUNTADO ES IGUAL AL BUSCADO
+         CLC   0(1,6),CHAR
+		 BE    GUARDAR
+		 
+*;       INCREMENTO EL R6 EN 1
+SEGUIR   A     6,=F'1'		  
+		 B     OPERAR
+
+GUARDAR  WTO   'GUARDAR'
+*;       ALMACENO LA ADDRESS DE R6 EN LA PLABRA APUNTADA POR EL R7
+         ST    6,0(7)
+		 A     7,=F'1'
+		 
+         B     SEGUIR
+
+TERMINAR WTO   'TERMINAR'
+*;       CIERRO VECSAL		 
+*;		 MVC   0(4,7),=X'FFFFFFFF'
+		 MVC   0(4,7),=F'-1'
+         B     MENU
+       
+		 
+********************************************
+*******   DECLARACION DE VARIABLES   *******
+********************************************
+WAITECB  DC    F'0'
+
+         DC    H'14'
+		 DC    H'0'
+PALABRA  DC    C'HOLA MUNDO'
+
+         DC    H'34'
+		 DC    H'0'
+MSG      DC    30C' '
+
+STRING   DS    F
+CHAR     DS    CL1
+VECSAL   DS    10F
+
+OPCION   DS    CL1
+ORDEN    DS    CL1
+
+		 END
