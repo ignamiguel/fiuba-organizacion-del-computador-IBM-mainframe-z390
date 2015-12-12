@@ -1,0 +1,234 @@
+*************************************************************************************
+*; Rutina interna en assembler IBM Mainframe que recibe los
+*; siguientes 3 parámetros:
+*; a. [Entrada] Dos números en base 2 de 8 dígitos cada uno en formato 
+*; carácter EBCDIC
+*; b. [Salida] Un campo resultado en donde la rutina devuelve la suma 
+*; de los dos números en base 2 como otro número en base 2 en formato EBCDIC
+*; La rutina deberá validar ambos parámetros de entrada y dejar el resultado de la
+*; suma pedida en el campo de salida.
+*; Ej. Parámetro de entrada: 00100111 00000010 (en caracteres EBCDIC)
+*; Parámetro de salida: 00101001 (en caracteres EBCDIC)
+*; ---------------------------------------------------------------------------------
+*************************************************************************************
+
+VOWEL    SUBENTRY BASES=(3,4)         
+         WTO   '=========>    INICIO    <========='         
+         
+		 BAL   5,INICIAR
+MENU	 BAL   5,IMPRME_M
+         WTOR  'Seleccionar opcion [1-9]',OPCION,,WAITECB
+		 WAIT  ECB=WAITECB 
+         CLC   OPCION,=C'1'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'2'
+		 BE    SUMAR
+		 CLC   OPCION,=C'3'
+		 BE    FIN
+		 CLC   OPCION,=C'9'
+		 BE    FIN
+		 
+FIN      WTO   '=========>    FIN    <========='  
+         SUBEXIT
+
+*************************************
+*******   INICIAR VARIABLES   *******
+*************************************
+INICIAR  LA    6,PALABRA
+         ST    6,STRING
+		 
+		 MVC   CHAR,=C'A'
+		 BR    5
+
+
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
+         WTO   '---------      MENU     ---------'
+         WTO   '---------------------------------'
+         WTO   '[1] Ver numeros'
+         WTO   '[2] Sumar numeros'
+*;       WTO   '[3] Buscar distancia minima entre vocales'
+		 
+         WTO   '[9] Salir'		 
+		 BR    5
+		 
+*************************************
+*******   MOSTRAR NUMEROS     *******
+*************************************
+MOSTRAR  MVC   MSG+0(30),=C'                                   '
+         LA    6,NUM1
+         MVC   MSG(8),0(6) 		 
+		 WTO   MF=(E,MSG-4)
+		 
+		 LA    6,NUM2
+         MVC   MSG(8),0(6) 		 
+		 WTO   MF=(E,MSG-4)		 
+		 
+		 B     MENU
+
+************************************
+*******   SUMAR NUMEROS      ******* 
+************************************
+SUMAR    LA    6,NUM1
+         BAL   5,VALIDAR
+         CLC   NUM_OK,=C'N'
+         BE    ERR_NUM1
+		 
+		 LA    6,NUM1
+         BAL   5,CNVR_IN
+         ZAP   EMPA1,NUM_P
+         
+         LA    6,NUM2
+         BAL   5,VALIDAR
+         CLC   NUM_OK,=C'N'
+         BE    ERR_NUM2
+		 
+		 LA    6,NUM2
+         BAL   5,CNVR_IN
+         ZAP   EMPA2,NUM_P		 
+         
+		 AP    EMPA1,EMPA2
+		 BAL   5,CNVR_OUT
+		 
+		 MVC   MSG+0(30),=C'Resultado:                    '
+		 
+		 MVC   MSG+11(10),RESULT
+		 WTO   MF=(E,MSG-4)
+		 
+         B     MENU
+
+*; *************************
+*; VALIDAR
+*; *************************
+VALIDAR  LA    8,8
+VAL_ING  CLC   0(1,6),=C'0'
+		 BL    VAL_ERR
+		 CLC   0(1,6),=C'1'
+		 BH    VAL_ERR
+		 A     6,=F'1'
+		 BCT   8,VAL_ING 
+		 
+		 MVC   NUM_OK,=C'S'		 
+         BR    5		 
+VAL_ERR  MVC   NUM_OK,=C'N'		 
+         BR    5		 
+
+*; *************************
+*; CONVERTIR EBCDIC A BINARIO
+*; *************************
+CNVR_IN  MVC   MSG+0(30),=C'Binario:                                 '
+         MVC   MSG+9(8),0(6) 
+         WTO   MF=(E,MSG-4)
+		 
+		 A     6,=F'7'
+         PACK  AUX_P,0(1,6)
+		 ZAP   NUM_P,AUX_P
+		 
+		 ZAP   POT2,=P'2'
+		 LA    8,7
+OPER_CNV S     6,=F'1'
+		 PACK  AUX_P,0(1,6)
+		 ZAP   FACTOR,AUX_P
+		 MP    FACTOR,POT2		 
+		 AP    NUM_P,FACTOR
+		 MP    POT2,=P'2'
+		 BCT   8,OPER_CNV
+         
+		 UNPK  AUX_C,NUM_P
+		 MVZ   AUX_C+4(1),=X'FF'
+		 MVC   MSG+0(30),=C'Decimal:                                 '
+         MVC   MSG+8(5),AUX_C 
+         WTO   MF=(E,MSG-4)
+		 
+         BR    5			 
+
+*; *************************
+*; CONVERTIR A EBCDIC
+*; *************************
+CNVR_OUT UNPK  AUX_C,EMPA1
+		 MVZ   AUX_C+4(1),=X'FF'
+		 MVC   MSG+0(30),=C'Resultado:                                 '
+         MVC   MSG+11(5),AUX_C 
+         WTO   MF=(E,MSG-4)
+         
+		 MVC   RESULT(10),=C'  00000000'
+         LA    7,RESULT         
+         A     7,=F'9'
+		 
+		 ZAP   DIVISOR,=P'2'
+         ZAP   DIVIDEND,EMPA1
+		 
+		 LA    6,DIVIDEND
+ACA		 DP    DIVIDEND,DIVISOR
+		 ZAP   COCIENTE,0(3,6)
+		 ZAP   RESTO,3(3,6)
+		 BAL   10,FORMATO
+         CP    COCIENTE,=P'2'
+		 BL    TERMINAR
+		 ZAP   DIVIDEND,COCIENTE
+		 B     ACA
+		 
+TERMINAR ZAP   RESTO,COCIENTE		 
+		 BAL   10,FORMATO         
+         BR    5
+
+FORMATO  UNPK  AUX_C,RESTO
+         MVZ   AUX_C+4(1),=X'FF'
+
+		 MVC   0(1,7),AUX_C+4
+		 S     7,=F'1'
+         BR    10
+		 
+*; *************************
+*; ERRORES
+*; *************************
+ERR_NUM1 WTO   'ERROR NUM 1'
+         B     MENU		 
+		 
+ERR_NUM2 WTO   'ERROR NUM 2'
+         B     MENU		 
+       
+********************************************
+*******   DECLARACION DE VARIABLES   *******
+********************************************
+WAITECB  DC    F'0'
+
+         DC    H'14'
+		 DC    H'0'
+PALABRA  DC    C'HOLA MUNDO'
+
+         DC    H'34'
+		 DC    H'0'
+MSG      DC    30C' '
+
+STRING   DS    F
+CHAR     DS    CL1
+MINIMO   DS    F
+
+OPCION   DS    CL1
+ORDEN    DS    CL1
+
+NUM1     DC    C'00100111'
+NUM2     DC    C'00000010'
+
+NUM_OK   DS    CL1
+RESULT   DC    10C' '   
+
+EMPA1    DS    PL3
+EMPA2    DS    PL3
+
+AUX_P    DS    PL1
+NUM_P    DS    PL3
+POT2     DS    PL2
+FACTOR   DS    PL3
+
+AUX_C    DS    CL5
+
+DIVIDEND DS    PL6
+DIVISOR  DS    PL3
+COCIENTE DS    PL3
+RESTO    DS    PL3
+
+		 END
