@@ -1,3 +1,15 @@
+*************************************************************************************
+*; Rutina interna en assembler IBM Mainframe que dado un string
+*; (cadena de caracteres terminados con un byte en X’00’) y un carácter, devuelva en un vector
+*; de salida las direcciones de memoria de donde se encuentre dicho carácter dentro del string.
+*; Parametros:
+*; STRING DS F *Contiene la dirección de inicio del string.
+*; CHAR DS C *Contiene el carácter a buscar dentro del string.
+*; VECSAL DS 256F *Vector de salida que contendrá las direcciones de memoria. Finaliza con
+*; una dirección con valor -1.
+*; ---------------------------------------------------------------------------------
+*************************************************************************************
+
 FC       SUBENTRY BASES=(3,4)         
          WTO   '=========>    INICIO    <========='         
          
