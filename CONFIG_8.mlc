@@ -1,0 +1,164 @@
+*************************************************************************************
+*; Rutina interna en assembler IBM Mainframe que reciba los siguientes 3 parámetros:
+*; a. Un campo empaquetado de longitud variable.
+*; b. Un byte en hexadecimal con la longitud del campo anterior 
+*; (valores 1(16) a 4(16) únicamente)
+*; c. Un campo resultado en donde la rutina deberá dejar la configuración en base 8 del
+*; empaquetado. (11 bytes en formato carácter EBCDIC)
+*; La rutina deberá validar tanto el parámetro del campo empaquetado como el parámetro de
+*; su longitud y dejar el resultado de la configuración pedida en el campo de salida.
+*; Ejemplo:
+*; Parámetros de entrada: 123C(16) 02(16)
+*; Parámetro de salida: 11074 (en caracteres EBCDIC)
+*; Además se pide codificar una posible invocación de la rutina dentro de un programa.
+*; ---------------------------------------------------------------------------------
+*************************************************************************************
+
+CONFIG   SUBENTRY BASES=(3,4)         
+         WTO   '=========>    INICIO    <========='         
+         
+		 BAL   5,INICIAR
+MENU	 BAL   5,IMPRME_M
+         WTOR  'Seleccionar opcion [1-9]',OPCION,,WAITECB
+		 WAIT  ECB=WAITECB 
+         CLC   OPCION,=C'1'
+		 BE    MOSTRAR
+		 CLC   OPCION,=C'2'
+		 BE    RUTINA
+		 CLC   OPCION,=C'3'
+		 BE    RUTINA
+		 CLC   OPCION,=C'9'
+		 BE    FIN
+		 
+FIN      WTO   '=========>    FIN    <========='  
+         SUBEXIT
+
+*************************************
+*******   INICIAR VARIABLES   *******
+*************************************
+INICIAR  LA    6,PALABRA
+         ST    6,STRING
+		 
+		 MVC   CHAR,=C'A'
+		 BR    5
+
+
+************************************
+*******         MENU         *******
+************************************
+IMPRME_M WTO   '---------------------------------'
+         WTO   '---------      MENU     ---------'
+         WTO   '---------------------------------'
+         WTO   '[1] Ver empaquetado'
+         WTO   '[2] Ejecutar rutina'
+         WTO   '[3] Buscar distancia minima entre vocales'
+		 
+         WTO   '[9] Salir'		 
+		 BR    5
+		 
+*************************************
+*******   MOSTRAR STRING      *******
+*************************************
+MOSTRAR  LA    6,PALABRA
+         WTO   MF=(E,PALABRA-4)
+		 
+		 B     MENU
+
+************************************
+*******   RUTINA            ******* 
+************************************
+RUTINA   BAL   5,VAL_LON
+         CLC   LON_OK,=C'N'
+		 BE    LON_ERR
+		 BAL   5,VAL_EMPA
+		 CLC   EMPA_OK,=C'N'
+		 BE    EMPA_ERR
+		 
+		 LA    6,0
+		 CLC   LONG,=X'01'
+		 BE    LOAD_1
+		 CLC   LONG,=X'02'
+		 BE    LOAD_2
+		 CLC   LONG,=X'03'
+		 BE    LOAD_3
+
+LOAD_4   ICM   6,15,EMPA
+         LA    9,11
+		 B     OPERAR
+LOAD_3	 ICM   6,7,EMPA+1
+         LA    9,8
+		 B     OPERAR
+LOAD_2	 ICM   6,3,EMPA+2
+         LA    9,6
+		 B     OPERAR
+LOAD_1	 ICM   6,1,EMPA+3
+         LA    9,3
+		 
+OPERAR   LA    8,RESULT   		 
+*;       APUNTO EL R8 AL FINAL DE RESULT
+	     A     8,=F'10'
+*;       CARGAR LONG 
+         MVC   RESULT,=C'00000000000'
+		 
+ACA		 LA    7,0
+		 SRDL  6,3
+		 SRL   7,29
+		 A     7,=X'000000F0'
+		 STC   7,0(8)
+*;       MUEVO EL R8 APUNTADO A RESULT
+		 S     8,=F'1'
+		 BCT   9,ACA
+		 
+*;       MUESTO
+         WTO   MF=(E,RESULT-4)
+		 
+		 
+         B     MENU
+*;       VALIDACIONES
+VAL_LON  WTO   'VALIDACION LONG'
+         MVC   LON_OK,=C'S'
+         BR    5
+
+VAL_EMPA WTO   'VALIDACION EMPA'
+         MVC   EMPA_OK,=C'S'
+         BR    5		 
+		 
+*;       MESNAJES ERRORES
+LON_ERR  WTO   'LONGITUD INVALIDA'
+         B     MENU
+EMPA_ERR WTO   'EMPAQUETADO INVALIDO'
+		 B     MENU
+		 
+
+		 
+********************************************
+*******   DECLARACION DE VARIABLES   *******
+********************************************
+WAITECB  DC    F'0'
+
+         DC    H'14'
+		 DC    H'0'
+PALABRA  DC    C'HOLA MUNDO'
+
+         DC    H'15'
+		 DC    H'0'
+RESULT   DS    CL11
+
+         DC    H'34'
+		 DC    H'0'
+MSG      DC    30C' '
+
+EMPA     DC    XL4'1122123C'
+LONG     DC    XL1'02'
+
+LON_OK   DS    CL1
+EMPA_OK  DS    CL1
+
+STRING   DS    F
+CHAR     DS    CL1
+MINIMO   DS    F
+
+OPCION   DS    CL1
+ORDEN    DS    CL1
+
+		 END
