@@ -36,22 +36,16 @@ FIN      WTO   '=========>    FIN    <========='
 *************************************
 *******   INICIAR VARIABLES   *******
 *************************************
-INICIAR  LA    6,PALABRA
-         ST    6,STRING
-		 
-		 MVC   CHAR,=C'A'
-		 BR    5
-
-
+INICIAR  BR    5
+         
 ************************************
 *******         MENU         *******
 ************************************
 IMPRME_M WTO   '---------------------------------'
          WTO   '---------      MENU     ---------'
          WTO   '---------------------------------'
-         WTO   '[1] Ver empaquetado'
+         WTO   '[1] Mostrar empaquetado'
          WTO   '[2] Ejecutar rutina'
-         WTO   '[3] Buscar distancia minima entre vocales'
 		 
          WTO   '[9] Salir'		 
 		 BR    5
@@ -59,8 +53,7 @@ IMPRME_M WTO   '---------------------------------'
 *************************************
 *******   MOSTRAR STRING      *******
 *************************************
-MOSTRAR  LA    6,PALABRA
-         WTO   MF=(E,PALABRA-4)
+MOSTRAR  WTO   'TO DO'
 		 
 		 B     MENU
 
@@ -68,10 +61,10 @@ MOSTRAR  LA    6,PALABRA
 *******   RUTINA            ******* 
 ************************************
 RUTINA   BAL   5,VAL_LON
-         CLC   LON_OK,=C'N'
+         CLC   IS_OK,=C'N'
 		 BE    LON_ERR
 		 BAL   5,VAL_EMPA
-		 CLC   EMPA_OK,=C'N'
+		 CLC   IS_OK,=C'N'
 		 BE    EMPA_ERR
 		 
 		 LA    6,0
@@ -114,14 +107,45 @@ ACA		 LA    7,0
 		 
 		 
          B     MENU
+*;================================
 *;       VALIDACIONES
-VAL_LON  WTO   'VALIDACION LONG'
-         MVC   LON_OK,=C'S'
-         BR    5
+*;================================
+VAL_LON  WTO   'VALIDAR LONGITUD'
+         MVC   IS_OK,=C'Y'
+         CLI   LONG,X'01'
+		 BL    INVALID
+         CLI   LONG,X'04'
+         BH    INVALID		 
+         
+         BR    5 
+		 
+VAL_EMPA WTO   'VALIDAR EMPAQUETADO'
+         MVC   IS_OK,=C'Y'
+		 LA    7,0
+         L     6,EMPA
+*;       VALIDO LETRA A-F         
+		 SRDL  6,4            
+		 SRL   7,28
+		 C     7,=X'0000000A'
+		 BL    INVALID
+         C     7,=X'0000000F'
+		 BH    INVALID
 
-VAL_EMPA WTO   'VALIDACION EMPA'
-         MVC   EMPA_OK,=C'S'
-         BR    5		 
+*;       VALIDO DIGITOS
+         LA    9,7
+NEXT	 LA    7,0
+         SRDL  6,4            
+		 SRL   7,28
+		 C     7,=X'00000000'
+		 BL    INVALID
+         C     7,=X'00000009'
+		 BH    INVALID
+         BCT   9,NEXT		 
+		 		 
+		 BR    5
+
+INVALID  MVC  IS_OK,=C'N'
+         BR   5				 
 		 
 *;       MESNAJES ERRORES
 LON_ERR  WTO   'LONGITUD INVALIDA'
@@ -136,10 +160,6 @@ EMPA_ERR WTO   'EMPAQUETADO INVALIDO'
 ********************************************
 WAITECB  DC    F'0'
 
-         DC    H'14'
-		 DC    H'0'
-PALABRA  DC    C'HOLA MUNDO'
-
          DC    H'15'
 		 DC    H'0'
 RESULT   DS    CL11
@@ -148,15 +168,10 @@ RESULT   DS    CL11
 		 DC    H'0'
 MSG      DC    30C' '
 
-EMPA     DC    XL4'1122123C'
+EMPA     DC    XL4'0000123C'
 LONG     DC    XL1'02'
 
-LON_OK   DS    CL1
-EMPA_OK  DS    CL1
-
-STRING   DS    F
-CHAR     DS    CL1
-MINIMO   DS    F
+IS_OK    DS    CL1
 
 OPCION   DS    CL1
 ORDEN    DS    CL1
