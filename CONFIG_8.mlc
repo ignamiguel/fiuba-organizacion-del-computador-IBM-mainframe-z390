@@ -51,14 +51,14 @@ IMPRME_M WTO   '---------------------------------'
 		 BR    5
 		 
 *************************************
-*******   MOSTRAR STRING      *******
+*******    MOSTRAR STRING     *******
 *************************************
 MOSTRAR  WTO   'TO DO'
 		 
 		 B     MENU
 
 ************************************
-*******   RUTINA            ******* 
+*******       RUTINA         ******* 
 ************************************
 RUTINA   BAL   5,VAL_LON
          CLC   IS_OK,=C'N'
@@ -152,9 +152,7 @@ LON_ERR  WTO   'LONGITUD INVALIDA'
          B     MENU
 EMPA_ERR WTO   'EMPAQUETADO INVALIDO'
 		 B     MENU
-		 
-
-		 
+		 		 
 ********************************************
 *******   DECLARACION DE VARIABLES   *******
 ********************************************
