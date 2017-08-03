@@ -49,7 +49,6 @@ IMPRME_M WTO   '---------------------------------'
          WTO   '---------------------------------'
          WTO   '[1] Ver numeros'
          WTO   '[2] Sumar numeros'
-*;       WTO   '[3] Buscar distancia minima entre vocales'
 		 
          WTO   '[9] Salir'		 
 		 BR    5
